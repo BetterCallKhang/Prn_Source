@@ -1,0 +1,121 @@
+Cong phap PRN:
+
+dotnet publish -c release -o ./Q1_triltce191249
+
+dotnet publish -c release -o ./Q2_triltce191249
+
+
+Đưa vào Program.cs
+
+builder.Services.AddDbContext<Prnsum25B123Context>(
+opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+
+
+Nếu đề có JWT setup như giống hệt appsetting. Giống keyword là được
+
+"Jwt": {
+"Issuer": "http://fpt.edu.vn"
+"Audience": "http://localhost:5808",
+"Key": "Practical Exam - PRN231 - Summer 2824 - Computing Fundamental Department - FPT University",
+"ExpiryInDays": 1
+}
+
+
+Trong Q1 GivenSolution chưa có CodeGeneration và FrameworkCore.Tool Khi chạy code generated nó tự add nhưng khi nộp phải đảm bảo đủ số lượng nuget package ban đầu không được thêm.
+
+Lưu lại lệnh Scaffod:
+
+dotnet ef dbcontext scaffold "Data Source=DESKTOP-BLF4OTR\SQLDEVELOPER;Initial Catalog=PRN232_PE_SU26_13;Integrated Security=True;Trust Server Certificate=True" Microsoft.EntityFrameworkCore.SqlServer -o Models
+
+Cách lấy ConnectString.
+
+dotnet ef dbcontext scaffold "Data Source=DESKTOP-DP2JRF9;Initial Catalog=PRN232_PE_SU26_13;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=True;Application Intent=ReadWrite;Multi Subnet Failover=False;Command Timeout=30" Microsoft.EntityFrameworkCore.SqlServer -o Models
+
+
+Sau đó xoá 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Data Source=DESKTOP-DP2JRF9;Initial Catalog=PE_PRN_Fall22B1;Integrated Security=True;Connect Timeout=30;Encrypt=False;Trust Server Certificate=True;Application Intent=ReadWrite;Multi Subnet Failover=False;Command Timeout=30");
+
+
+Ở DbContext
+
+
+Trong program.cs thiếu lệnh builder
+builder.Services.AddDbContext<PePrnFall22B1Context>(
+opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
+
+
+
+dưới đó bê y đúc project cũ.
+
+builder.Services.AddControllers();
+
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+đè lên app = builder.build
+
+
+Tạo folder controller xong xem đề generated gì thì gen. Dùng scaffold gen ko được thì dùng lệnh
+dotnet aspnet-codegenerator controller -name SpecializationsController -m Specialization -dc Prn232PeSu2613Context -api -outDir Controllers
+
+NugetPackage:
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="15.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.23" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.23" />
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.3.2" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.23">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.23" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.23">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.23" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="9.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="9.0.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="9.0.3" />
+  </ItemGroup>
+
+
+Nhớ sửa lại NugetPackage sau khi generated xong.
+
+
+
+Muốn lấy 2 bảng 
+
+return await _context.Directors
+                         .Include(d => d.Movies) // Thêm dòng này để load dữ liệu Movies
+                         .ToListAsync();
+
+Nếu lỗi vòng lặp add code này vào program.cs
+
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
+
+

@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PRN232 — Tutorial (Setup / Làm bài / Tra cứu code)</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1f2933;
+    --muted: #5b6770;
+    --line: #dde2e7;
+    --accent: #0b5ed7;
+    --accent-soft: #e7f0ff;
+    --code-bg: #0f172a;
+    --code-text: #e6edf7;
+    --warn-bg: #fff7e6;
+    --warn-line: #f0c36d;
+    --ok-bg: #ecfdf3;
+    --ok-line: #86d7a8;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  header.top {
+    background: #0b1324;
+    color: #fff;
+    padding: 28px 20px;
+  }
+  header.top .inner { max-width: 1040px; margin: 0 auto; }
+  header.top h1 { margin: 0 0 6px; font-size: 26px; }
+  header.top p { margin: 0; color: #a9b6c8; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px 60px; }
+  nav.toc {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0 26px;
+  }
+  nav.toc h2 { margin: 0 0 10px; font-size: 15px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+  nav.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { margin: 3px 0; break-inside: avoid; }
+  @media (max-width: 700px) { nav.toc ol { columns: 1; } }
+  section.part {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 22px 24px 8px;
+    margin-bottom: 26px;
+  }
+  section.part > h2 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--line);
+  }
+  .part-label {
+    display: inline-block;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .08em;
+    padding: 3px 10px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  h3 { margin: 30px 0 8px; font-size: 18px; }
+  h4 { margin: 20px 0 6px; font-size: 15px; }
+  p { margin: 8px 0; }
+  ul, ol { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  .path {
+    display: inline-block;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    background: #eef2f6;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: #334155;
+    margin: 2px 0;
+  }
+  .note, .warn, .ok {
+    border-left: 4px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin: 12px 0;
+  }
+  .warn { border-color: var(--warn-line); background: var(--warn-bg); }
+  .ok { border-color: var(--ok-line); background: var(--ok-bg); }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 18px; font-size: 14px; }
+  th, td { border: 1px solid var(--line); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #f0f3f7; }
+  code.inline {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
+    background: #eef2f6;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+  pre {
+    position: relative;
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    margin: 10px 0 18px;
+    font-size: 13px;
+    line-height: 1.55;
+    tab-size: 4;
+  }
+  pre code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; }
+  button.copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    border-radius: 5px;
+    font-size: 11px;
+    padding: 3px 8px;
+    cursor: pointer;
+    opacity: .75;
+  }
+  button.copy:hover { opacity: 1; }
+  details {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin: 10px 0 16px;
+    background: #fbfcfe;
+  }
+  details summary { cursor: pointer; font-weight: 600; }
+  details[open] summary { margin-bottom: 8px; }
+  .kbd {
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    border: 1px solid var(--line);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0 5px;
+    background: #fff;
+  }
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 10px 20px 40px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <h1>PRN232 — Tutorial nhanh</h1>
+    <p>Setup → Cách làm bài → Tra cứu code. Mọi snippet đều copy được và khớp với source trong <code style="color:#c7d5ea">src/</code>.</p>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <h2>Mục lục</h2>
+    <ol>
+      <li><a href="#p1">Phần 1 — Setup</a>
+        <ol>
+          <li><a href="#p1-1">Cài .NET 8</a></li>
+          <li><a href="#p1-2">SQL Server + tạo DB</a></li>
+          <li><a href="#p1-3">Restore &amp; chạy</a></li>
+          <li><a href="#p1-4">DB-first scaffold</a></li>
+          <li><a href="#p1-5">Cấu hình appsettings</a></li>
+          <li><a href="#p1-6">Verify</a></li>
+        </ol>
+      </li>
+      <li><a href="#p2">Phần 2 — Cách làm bài</a>
+        <ol>
+          <li><a href="#p2-1">Quy trình 9 bước</a></li>
+          <li><a href="#p2-2">Checklist trước khi nộp</a></li>
+          <li><a href="#p2-3">Lỗi thường gặp</a></li>
+        </ol>
+      </li>
+      <li><a href="#p3">Phần 3 — Tra cứu code</a>
+        <ol>
+          <li><a href="#p3-1">Query / Where / OrderBy / phân trang</a></li>
+          <li><a href="#p3-2">Include nhiều bảng + DTO</a></li>
+          <li><a href="#p3-3">Controller CRUD</a></li>
+          <li><a href="#p3-4">Đổi route / tham số</a></li>
+          <li><a href="#p3-5">DbContext trong Program.cs</a></li>
+          <li><a href="#p3-6">Tạo JWT</a></li>
+          <li><a href="#p3-7">Validate JWT</a></li>
+          <li><a href="#p3-8">Gọi API từ Razor Page</a></li>
+          <li><a href="#p3-9">Bearer token + HttpClient</a></li>
+          <li><a href="#p3-10">Session</a></li>
+          <li><a href="#p3-11">Form + antiforgery</a></li>
+          <li><a href="#p3-12">Swagger Bearer</a></li>
+          <li><a href="#p3-13">Id HTML theo đề mẫu</a></li>
+          <li><a href="#p3-14">Code generator</a></li>
+          <li><a href="#p3-15">Publish</a></li>
+        </ol>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- ================================================================ -->
+  <!-- PHẦN 1                                                           -->
+  <!-- ================================================================ -->
+  <section class="part" id="p1">
+    <div class="part-label">Phần 1</div>
+    <h2>Setup môi trường &amp; database</h2>
+
+    <h3 id="p1-1">1.1. Cài .NET 8 SDK</h3>
+    <pre><code>dotnet --version
+# phải ra 8.x, ví dụ: 8.0.133
+dotnet --list-sdks</code></pre>
+    <p>Nếu chưa có: tải <strong>.NET 8 SDK</strong> tại <code class="inline">dotnet.microsoft.com/download/dotnet/8.0</code>. Không cần Visual Studio; VS Code + terminal là đủ.</p>
+
+    <h3 id="p1-2">1.2. SQL Server &amp; tạo database</h3>
+    <p>Chọn 1 trong 2 cách:</p>
+
+    <h4>Cách A — Docker (Linux/macOS/Windows đều được)</h4>
+    <pre><code># 1) Chạy SQL Server 2022 (đổi mật khẩu nếu muốn, phải đủ mạnh: chữ hoa + số + ký tự đặc biệt)
+docker run -d --name prn232-sql \
+  -e ACCEPT_EULA=Y \
+  -e MSSQL_SA_PASSWORD='Prn232@Exam123' \
+  -e MSSQL_PID=Developer \
+  -p 1433:1433 \
+  mcr.microsoft.com/mssql/server:2022-latest
+
+# 2) Đợi ~10-20s rồi kiểm tra
+docker exec prn232-sql /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P 'Prn232@Exam123' -C -Q "SELECT @VERSION"
+
+# 3) Tạo DB + bảng + seed data
+docker cp src/db/init.sql prn232-sql:/tmp/init.sql
+docker exec prn232-sql /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P 'Prn232@Exam123' -C -i /tmp/init.sql
+
+# 4) Kiểm tra
+docker exec prn232-sql /opt/mssql-tools18/bin/sqlcmd \
+  -S localhost -U sa -P 'Prn232@Exam123' -C -d Prn232Exam \
+  -Q "SELECT * FROM Account; SELECT * FROM Product;"</code></pre>
+    <div class="note">
+      Container tên <code class="inline">prn232-sql</code> chỉ tạo 1 lần. Lần sau chỉ cần
+      <code class="inline">docker start prn232-sql</code>.
+      Muốn reset dữ liệu: chạy lại bước 3.
+    </div>
+
+    <h4>Cách B — SQL Server trên máy (Windows)</h4>
+    <ul>
+      <li>Cài SQL Server (bản Developer/Express) + SSMS hoặc Azure Data Studio.</li>
+      <li>Mở <span class="path">src/db/init.sql</span> → Execute. Script tự tạo DB <code class="inline">Prn232Exam</code>.</li>
+      <li>Connection string dạng:
+        <code class="inline">Server=localhost;Database=Prn232Exam;Integrated Security=True;Trust Server Certificate=True</code>
+      </li>
+    </ul>
+
+    <h4>Seed data có sẵn</h4>
+    <table>
+      <tr><th>Bảng</th><th>Dữ liệu</th></tr>
+      <tr><td><code class="inline">Account</code></td><td><code class="inline">admin / 123456</code> (Admin), <code class="inline">user / 123456</code> (User)</td></tr>
+      <tr><td><code class="inline">Product</code></td><td>5 sản phẩm mẫu</td></tr>
+    </table>
+    <div class="warn">
+      Password đang lưu <strong>plaintext</strong> cho nhanh thi (theo đặc tả). Không dùng cách này cho project thật.
+    </div>
+
+    <h3 id="p1-3">1.3. Restore &amp; build solution</h3>
+    <pre><code>dotnet restore src/Prn232.sln
+dotnet build   src/Prn232.sln</code></pre>
+    <p>Build phải ra <code class="inline">Build succeeded</code>. Nếu lỗi, xem <a href="#p2-3">mục 2.3</a>.</p>
+
+    <h3 id="p1-4">1.4. DB-first scaffold (khi đổi đề / tạo lại model)</h3>
+    <p>Source hiện tại <strong>đã scaffold sẵn</strong> (<span class="path">Models/</span> trong 2 API). Chỉ làm lại khi đổi database/model.</p>
+
+    <h4>Bước 1 — cài EF tool</h4>
+    <pre><code># Cài global (một lần)
+dotnet tool install --global dotnet-ef --version 8.0.23
+
+# Hoặc cài tạm, không đụng máy:
+dotnet tool install --tool-path ./.tools dotnet-ef --version 8.0.23</code></pre>
+
+    <h4>Bước 2 — scaffold vào TỪNG API project</h4>
+    <pre><code>cd src/Prn232.ProductApi
+dotnet ef dbcontext scaffold \
+  "Server=localhost,1433;Database=Prn232Exam;User Id=sa;Password=Prn232@Exam123;TrustServerCertificate=True" \
+  Microsoft.EntityFrameworkCore.SqlServer \
+  -o Models -c Prn232Context --no-onconfiguring
+
+cd ../Prn232.AuthApi
+dotnet ef dbcontext scaffold \
+  "Server=localhost,1433;Database=Prn232Exam;User Id=sa;Password=Prn232@Exam123;TrustServerCertificate=True" \
+  Microsoft.EntityFrameworkCore.SqlServer \
+  -o Models -c Prn232Context --no-onconfiguring</code></pre>
+
+    <div class="note">
+      <code class="inline">--no-onconfiguring</code> giúp <strong>không sinh</strong> method
+      <code class="inline">OnConfiguring</code> hard-code connection string.
+      Nếu tool cũ không hỗ trợ flag này: mở <span class="path">Models/Prn232Context.cs</span> và xoá tay method đó.
+    </div>
+
+    <h4>Bước 3 — kiểm tra DbContext</h4>
+    <p>Trong <span class="path">Models/Prn232Context.cs</span> phải còn constructor nhận <code class="inline">DbContextOptions</code>, và <strong>không</strong> còn <code class="inline">OnConfiguring</code>:</p>
+    <pre><code>public partial class Prn232Context : DbContext
+{
+    public Prn232Context(DbContextOptions&lt;Prn232Context&gt; options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet&lt;Account&gt; Accounts { get; set; }
+    public virtual DbSet&lt;Product&gt; Products { get; set; }
+}</code></pre>
+
+    <h4>Bước 4 — kiểm tra số NuGet package</h4>
+    <p>Scaffold có thể tự thêm package. Danh sách chuẩn của repo nằm trong 2 file <span class="path">*.csproj</span> (9 package, README mục 4.3). Đừng để thừa/thiếu khi nộp.</p>
+
+    <h3 id="p1-5">1.5. Cấu hình</h3>
+    <h4>Hai API — connection string + JWT giống hệt nhau</h4>
+    <p><span class="path">src/Prn232.AuthApi/appsettings.json</span> và <span class="path">src/Prn232.ProductApi/appsettings.json</span>:</p>
+    <pre><code>{
+  "Urls": "http://localhost:5001",
+  "ConnectionStrings": {
+    "MyCnn": "Server=localhost,1433;Database=Prn232Exam;User Id=sa;Password=Prn232@Exam123;TrustServerCertificate=True"
+  },
+  "Jwt": {
+    "Issuer": "http://fpt.edu.vn",
+    "Audience": "http://localhost:5808",
+    "Key": "Practical Exam - PRN231 - Summer 2824 - Computing Fundamental Department - FPT University",
+    "ExpiryInDays": 1
+  }
+}</code></pre>
+    <div class="warn">
+      <strong>Key / Issuer / Audience phải GIỐNG HỆT</strong> ở AuthApi và ProductApi.
+      Lệch 1 ký tự → ProductApi trả <code class="inline">401</code> dù token vừa lấy.
+      <br />Với ProductApi thì đổi <code class="inline">"Urls"</code> thành <code class="inline">http://localhost:5002</code>.
+    </div>
+
+    <h4>FE — địa chỉ 2 API</h4>
+    <p><span class="path">src/Prn232.Fe/appsettings.json</span>:</p>
+    <pre><code>{
+  "Urls": "http://localhost:5000",
+  "AuthApiBaseUrl": "http://localhost:5001",
+  "ProductApiBaseUrl": "http://localhost:5002"
+}</code></pre>
+    <div class="note">
+      Đổi port thì sửa ở <strong>cả</strong> <code class="inline">appsettings.json</code> (key <code class="inline">Urls</code>)
+      và <span class="path">Properties/launchSettings.json</span> (applicationUrl) để
+      <code class="inline">dotnet run</code> và Visual Studio cùng đúng.
+    </div>
+
+    <h3 id="p1-6">1.6. Chạy &amp; verify</h3>
+    <p>Mở 3 terminal:</p>
+    <pre><code>dotnet run --project src/Prn232.AuthApi      # http://localhost:5001
+dotnet run --project src/Prn232.ProductApi   # http://localhost:5002
+dotnet run --project src/Prn232.Fe           # http://localhost:5000</code></pre>
+
+    <table>
+      <tr><th>Kiểm tra</th><th>Kết quả đúng</th></tr>
+      <tr><td><code class="inline">http://localhost:5001/swagger</code></td><td>Swagger AuthApi, có <code class="inline">/api/auth/login</code>, <code class="inline">/api/auth/me</code></td></tr>
+      <tr><td><code class="inline">http://localhost:5002/swagger</code></td><td>Swagger ProductApi, có nút <strong>Authorize</strong></td></tr>
+      <tr><td><code class="inline">http://localhost:5000</code></td><td>Redirect sang <code class="inline">/Login</code></td></tr>
+      <tr><td>Login <code class="inline">admin / 123456</code></td><td>Vào <code class="inline">/Products</code>, thấy 5 sản phẩm</td></tr>
+      <tr><td>Create → Edit → Delete</td><td>Danh sách cập nhật, không lỗi 500</td></tr>
+    </table>
+
+    <p>Test nhanh API bằng curl (không cần mở Swagger):</p>
+    <pre><code># Lấy token
+curl -s -X POST http://localhost:5001/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"123456"}'
+
+# Gọi API có token
+curl -s "http://localhost:5002/api/products?page=1&amp;size=5" \
+  -H "Authorization: Bearer &lt;DÁN_TOKEN_VÀO_ĐÂY&gt;"</code></pre>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PHẦN 2                                                           -->
+  <!-- ================================================================ -->
+  <section class="part" id="p2">
+    <div class="part-label">Phần 2</div>
+    <h2>Cách làm bài trong phòng thi</h2>
+
+    <h3 id="p2-1">2.1. Quy trình 9 bước khi nhận đề</h3>
+    <table>
+      <tr><th>#</th><th>Việc cần làm</th><th>Sửa ở đâu</th></tr>
+      <tr>
+        <td>1</td>
+        <td><strong>Đọc đề, gạch chân</strong>: tên bảng, field, quan hệ, API cần làm, yêu cầu giao diện (id HTML, filter, sort, phân trang).</td>
+        <td>Giấy / file note</td>
+      </tr>
+      <tr>
+        <td>2</td>
+        <td><strong>Tạo DB</strong>: chạy script đề cho (hoặc sửa <span class="path">src/db/init.sql</span> theo đề).</td>
+        <td><span class="path">src/db/init.sql</span></td>
+      </tr>
+      <tr>
+        <td>3</td>
+        <td><strong>Scaffold model</strong> vào 2 API, xoá <code class="inline">OnConfiguring</code>.</td>
+        <td><span class="path">*/Models/</span></td>
+      </tr>
+      <tr>
+        <td>4</td>
+        <td><strong>Sửa Program.cs</strong>: <code class="inline">AddDbContext</code>, JWT (nếu đề có), Swagger.</td>
+        <td><span class="path">*/Program.cs</span></td>
+      </tr>
+      <tr>
+        <td>5</td>
+        <td><strong>Viết API</strong>: đổi <code class="inline">DbSet</code>, route, field DTO, include bảng liên quan, tính toán field phụ (vd <code class="inline">numberOfEmployee</code>).</td>
+        <td><span class="path">ProductApi/Controllers/</span>, <span class="path">ProductApi/Dtos/</span></td>
+      </tr>
+      <tr>
+        <td>6</td>
+        <td><strong>Test API</strong> bằng Swagger trước khi làm FE. Sai ở đây thì FE cũng sai.</td>
+        <td><code class="inline">:5001/swagger</code>, <code class="inline">:5002/swagger</code></td>
+      </tr>
+      <tr>
+        <td>7</td>
+        <td><strong>Sửa FE</strong>: DTO copy, <code class="inline">ApiClient</code> (route/tham số), page list/form, id HTML nếu đề yêu cầu.</td>
+        <td><span class="path">Fe/Services/ApiClient.cs</span>, <span class="path">Fe/Pages/</span>, <span class="path">Fe/Models/</span></td>
+      </tr>
+      <tr>
+        <td>8</td>
+        <td><strong>Test end-to-end</strong>: login → list → filter/sort → create → edit → delete → logout. Bấm F12 xem có lỗi JS/404 không.</td>
+        <td>Trình duyệt</td>
+      </tr>
+      <tr>
+        <td>9</td>
+        <td><strong>Publish</strong> đúng tên folder, kiểm tra checklist bên dưới.</td>
+        <td>Terminal</td>
+      </tr>
+    </table>
+    <div class="ok">
+      Mẹo: làm theo thứ tự <strong>DB → API → Swagger → FE → publish</strong>.
+      Tuyệt đối không làm FE trước khi API trả đúng JSON.
+    </div>
+
+    <h3 id="p2-2">2.2. Checklist trước khi nộp</h3>
+    <ul>
+      <li><strong>Build Release sạch</strong>: <code class="inline">dotnet build -c Release</code> không error.</li>
+      <li><strong>Đúng số NuGet</strong> so với template đề cho (không tự thêm package mới).</li>
+      <li><strong>Connection string</strong> nằm trong <code class="inline">appsettings.json</code> key <code class="inline">MyCnn</code>, không hard-code trong code.</li>
+      <li><strong>JWT</strong> giống hệt nhau ở 2 API; không commit key thật nếu trường yêu cầu khác.</li>
+      <li><strong>Port</strong> không trùng process khác; FE gọi đúng port API.</li>
+      <li><strong>Tên folder publish</strong> đúng format đề: <code class="inline">Q1_&lt;MSSV&gt;</code>, <code class="inline">Q2_&lt;MSSV&gt;</code>.</li>
+      <li><strong>Xoá <code class="inline">bin/</code>, <code class="inline">obj/</code></strong> trong folder nộp nếu đề yêu cầu giảm dung lượng.</li>
+      <li><strong>Không còn code mẫu</strong> (WeatherForecast, Privacy...) và không còn <code class="inline">TODO</code> bỏ dở.</li>
+      <li><strong>Restart sạch</strong>: tắt 3 app, chạy lại từ đầu, login + CRUD vẫn OK.</li>
+    </ul>
+
+    <h3 id="p2-3">2.3. Lỗi thường gặp &amp; cách sửa</h3>
+    <table>
+      <tr><th>Lỗi</th><th>Nguyên nhân</th><th>Cách sửa</th></tr>
+      <tr>
+        <td>API trả <code class="inline">401 Unauthorized</code> dù đã login</td>
+        <td>JWT Key/Issuer/Audience lệch giữa 2 API; thiếu <code class="inline">UseAuthentication()</code>; token không được gửi kèm</td>
+        <td>Copy nguyên block <code class="inline">Jwt</code> sang cả 2 appsettings; thêm <code class="inline">app.UseAuthentication()</code> <strong>trước</strong> <code class="inline">UseAuthorization()</code>; kiểm tra header <code class="inline">Authorization: Bearer ...</code></td>
+      </tr>
+      <tr>
+        <td><code class="inline">/api/auth/me</code> trả role null</td>
+        <td>JWT handler map claim <code class="inline">role</code> sang URI claim của Microsoft</td>
+        <td>Đặt <code class="inline">options.MapInboundClaims = false;</code> và <code class="inline">RoleClaimType = "role"</code> (đã có trong repo)</td>
+      </tr>
+      <tr>
+        <td>Lỗi vòng lặp JSON: <em>A possible object cycle was detected</em></td>
+        <td>Entity có navigation property 2 chiều</td>
+        <td>Ưu tiên map entity → DTO. Hoặc <code class="inline">ReferenceHandler.IgnoreCycles</code> (xem <a href="#p3-2">3.2</a>)</td>
+      </tr>
+      <tr>
+        <td>FE gọi API lỗi CORS</td>
+        <td>Gọi API trực tiếp từ JS trình duyệt</td>
+        <td>Repo này FE gọi qua HttpClient phía server nên không cần CORS. Nếu đề bắt gọi JS: thêm <code class="inline">AddCors</code> + <code class="inline">UseCors</code></td>
+      </tr>
+      <tr>
+        <td><code class="inline">NullReferenceException</code> khi đọc Session</td>
+        <td>Thiếu <code class="inline">UseSession()</code>, thiếu <code class="inline">AddSession()</code> / <code class="inline">AddDistributedMemoryCache()</code></td>
+        <td>Xem <a href="#p3-10">3.10</a>. <code class="inline">UseSession()</code> phải đứng trước <code class="inline">MapRazorPages()</code></td>
+      </tr>
+      <tr>
+        <td><code class="inline">400 Bad Request</code> khi submit form Razor</td>
+        <td>Thiếu antiforgery token hoặc cookie</td>
+        <td>Dùng <code class="inline">&lt;form method="post"&gt;</code> + tag helper (tự sinh token). Đừng tự viết form post bằng JS mà quên token</td>
+      </tr>
+      <tr>
+        <td><code class="inline">A network-related ... SQL Server</code></td>
+        <td>Sai server/port, SQL chưa chạy, thiếu <code class="inline">TrustServerCertificate=True</code></td>
+        <td>Kiểm tra container/ service; thêm <code class="inline">TrustServerCertificate=True</code>; thử <code class="inline">Server=localhost,1433</code></td>
+      </tr>
+      <tr>
+        <td>Port đã bị dùng (<code class="inline">address already in use</code>)</td>
+        <td>App cũ chưa tắt</td>
+        <td><code class="inline">pkill -f Prn232</code> hoặc đổi port trong <code class="inline">appsettings.json</code> + <code class="inline">launchSettings.json</code></td>
+      </tr>
+      <tr>
+        <td>Scaffold lỗi <em>Unable to create DbContext</em> / thiếu design package</td>
+        <td>Chưa restore, thiếu <code class="inline">Microsoft.EntityFrameworkCore.Design</code></td>
+        <td><code class="inline">dotnet restore</code>; kiểm tra csproj có package Design; chạy <code class="inline">dotnet ef</code> đúng version 8.x</td>
+      </tr>
+      <tr>
+        <td>Swagger hiện nhưng gọi API bị 401</td>
+        <td>Chưa bấm <strong>Authorize</strong>, hoặc dán kèm chữ <code class="inline">Bearer</code></td>
+        <td>Bấm Authorize, chỉ dán token (repo cấu hình <code class="inline">Scheme = "bearer"</code>)</td>
+      </tr>
+      <tr>
+        <td>Ngày giờ lệch 7 tiếng</td>
+        <td>DB lưu UTC (<code class="inline">SYSUTCDATETIME</code>)</td>
+        <td>Đổi sang <code class="inline">GETDATE()</code> nếu đề yêu cầu giờ VN, hoặc format khi hiển thị</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ================================================================ -->
+  <!-- PHẦN 3                                                           -->
+  <!-- ================================================================ -->
+  <section class="part" id="p3">
+    <div class="part-label">Phần 3</div>
+    <h2>Tra cứu code — “muốn làm X thì copy đoạn này”</h2>
+
+    <h3 id="p3-1">3.1. Query: Where / OrderBy / phân trang / search</h3>
+    <p><span class="path">src/Prn232.ProductApi/Controllers/ProductsController.cs</span></p>
+    <pre><code>var query = _context.Products.AsQueryable();
+
+// Lọc theo tên (đổi field theo đề)
+if (!string.IsNullOrWhiteSpace(search))
+{
+    query = query.Where(p =&gt; p.Name.Contains(search));
+}
+
+// Đếm TRƯỚC khi Skip/Take
+var total = await query.CountAsync();
+
+var items = await query
+    .OrderBy(p =&gt; p.Id)                  // đổi sang OrderByDescending / ThenBy nếu đề yêu cầu
+    .Skip((page - 1) * size)
+    .Take(size)
+    .Select(p =&gt; new ProductDto
+    {
+        Id = p.Id,
+        Name = p.Name,
+        Price = p.Price,
+        Description = p.Description,
+        CreatedAt = p.CreatedAt
+    })
+    .ToListAsync();
+
+return Ok(new ProductPageDto { Items = items, Page = page, Size = size, Total = total });</code></pre>
+    <div class="note">
+      Nếu đề yêu cầu trả <strong>mảng trần</strong> (như đề mẫu Q1.1): bỏ
+      <code class="inline">ProductPageDto</code> và <code class="inline">return Ok(items);</code>.
+    </div>
+
+    <details>
+      <summary>Ví dụ lọc + sort theo query string (đề mẫu Q2)</summary>
+      <pre><code>[HttpGet]
+public async Task&lt;IActionResult&gt; GetAll(
+    [FromQuery] string? majorCode,
+    [FromQuery] string? gender,
+    [FromQuery] string? sortBy)
+{
+    var query = _context.Students
+        .Include(s =&gt; s.Major)
+        .AsQueryable();
+
+    if (!string.IsNullOrEmpty(majorCode))
+        query = query.Where(s =&gt; s.Major.Code == majorCode);
+
+    if (!string.IsNullOrEmpty(gender))
+        query = query.Where(s =&gt; s.Gender == gender);
+
+    query = sortBy switch
+    {
+        "studentId" =&gt; query.OrderBy(s =&gt; s.StudentId),
+        "studentDob" =&gt; query.OrderBy(s =&gt; s.Dob),
+        _ =&gt; query.OrderBy(s =&gt; s.FullName)   // mặc định sort theo tên
+    };
+
+    var result = await query
+        .Select(s =&gt; new
+        {
+            s.StudentId,
+            FullName = s.FullName,
+            MajorName = s.Major.Name,
+            s.Dob
+        })
+        .ToListAsync();
+
+    return Ok(result);
+}</code></pre>
+    </details>
+
+    <h3 id="p3-2">3.2. Include nhiều bảng + map DTO</h3>
+    <p>Lấy dữ liệu bảng liên quan:</p>
+    <pre><code>var products = await _context.Products
+    .Include(p =&gt; p.Category)          // 1-n
+    .Include(p =&gt; p.Tags)              // n-n
+    .ToListAsync();</code></pre>
+
+    <p>Gọn hơn: <strong>projection thẳng ra DTO</strong> (không lộ navigation property, không bị vòng lặp JSON):</p>
+    <pre><code>var project = await _context.Projects
+    .Select(p =&gt; new
+    {
+        p.ProjectId,
+        p.ProjectName,
+        p.StartDate,
+        p.EndDate,
+        p.Budget,
+        numberOfEmployee = p.EmployeeProjects.Count,   // field phụ đề hay bắt
+        Employees = p.EmployeeProjects.Select(ep =&gt; new
+        {
+            ep.Employee.EmployeeId,
+            EmployeeName = ep.Employee.Name,
+            Department = ep.Employee.Department.DepartmentName,
+            ep.Role,
+            ep.JoinDate,
+            ep.LeaveDate
+        })
+    })
+    .ToListAsync();</code></pre>
+
+    <p>Nếu vẫn serialize entity và bị lỗi vòng lặp, thêm vào <code class="inline">Program.cs</code>:</p>
+    <pre><code>builder.Services.AddControllers().AddJsonOptions(o =&gt;
+    o.JsonSerializerOptions.ReferenceHandler =
+        System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles);</code></pre>
+
+    <h3 id="p3-3">3.3. Controller CRUD tối thiểu</h3>
+    <pre><code>[ApiController]
+[Route("api/products")]
+[Authorize]
+public class ProductsController : ControllerBase
+{
+    private readonly Prn232Context _context;
+    public ProductsController(Prn232Context context) =&gt; _context = context;
+
+    [HttpGet]
+    public async Task&lt;IActionResult&gt; GetAll()
+        =&gt; Ok(await _context.Products.Select(p =&gt; new { p.Id, p.Name, p.Price }).ToListAsync());
+
+    [HttpGet("{id:int}")]
+    public async Task&lt;IActionResult&gt; GetById(int id)
+    {
+        var entity = await _context.Products.FindAsync(id);
+        return entity == null
+            ? NotFound(new { message = $"Không tìm thấy id = {id}" })
+            : Ok(entity);
+    }
+
+    [HttpPost]
+    public async Task&lt;IActionResult&gt; Create([FromBody] SaveProductDto dto)
+    {
+        var entity = new Product { Name = dto.Name, Price = dto.Price, Description = dto.Description };
+        _context.Products.Add(entity);
+        await _context.SaveChangesAsync();
+        return CreatedAtAction(nameof(GetById), new { id = entity.Id }, entity);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task&lt;IActionResult&gt; Update(int id, [FromBody] SaveProductDto dto)
+    {
+        var entity = await _context.Products.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        entity.Name = dto.Name;
+        entity.Price = dto.Price;
+        entity.Description = dto.Description;
+        await _context.SaveChangesAsync();
+        return Ok(entity);
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task&lt;IActionResult&gt; Delete(int id)
+    {
+        var entity = await _context.Products.FindAsync(id);
+        if (entity == null) return NotFound();
+
+        _context.Products.Remove(entity);
+        await _context.SaveChangesAsync();
+        return Ok(new { message = "Đã xoá", id });
+    }
+}</code></pre>
+    <div class="note">
+      Bảng nào có FK thì phải xoá theo thứ tự (con trước, cha sau), hoặc để DB báo lỗi FK rồi xử lý.
+    </div>
+
+    <h3 id="p3-4">3.4. Đổi route / tham số</h3>
+    <pre><code>// Đổi route cố định
+[Route("api/Project")]              // thay vì api/products
+
+// Route + tham số trên action
+[HttpGet("GetProjects")]             // -&gt; /api/Project/GetProjects
+[HttpGet("GetProject/{projectId:int}")] // -&gt; /api/Project/GetProject/1
+[HttpDelete("Delete/{employeeId:int}")]
+
+// Nhận tham số
+public async Task&lt;IActionResult&gt; GetProject(int projectId) { ... }
+
+// Query string
+public async Task&lt;IActionResult&gt; GetAll(int page = 1, int size = 10, string? search = null) { ... }</code></pre>
+    <p>Đổi xong nhớ sửa URL tương ứng trong <span class="path">Fe/Services/ApiClient.cs</span>.</p>
+
+    <h3 id="p3-5">3.5. DbContext trong Program.cs</h3>
+    <pre><code>builder.Services.AddDbContext&lt;Prn232Context&gt;(opt =&gt;
+    opt.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));</code></pre>
+    <p>Cần <code class="inline">using Microsoft.EntityFrameworkCore;</code>. Nếu đổi tên context khi scaffold (<code class="inline">-c TenKhacContext</code>) thì sửa cả ở đây và ở controller.</p>
+
+    <h3 id="p3-6">3.6. Tạo JWT</h3>
+    <p><span class="path">src/Prn232.AuthApi/Services/TokenService.cs</span></p>
+    <pre><code>var claims = new List&lt;Claim&gt;
+{
+    new(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
+    new("username", account.Username),
+    new("role", account.Role),
+};
+
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwt.Key));
+var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+var token = new JwtSecurityToken(
+    issuer: _jwt.Issuer,
+    audience: _jwt.Audience,
+    claims: claims,
+    expires: DateTime.UtcNow.AddDays(_jwt.ExpiryInDays),
+    signingCredentials: credentials);
+
+return new JwtSecurityTokenHandler().WriteToken(token);</code></pre>
+    <p>Cần các using:</p>
+    <pre><code>using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;</code></pre>
+
+    <h3 id="p3-7">3.7. Validate JWT trong Program.cs</h3>
+    <pre><code>var jwt = builder.Configuration.GetSection("Jwt").Get&lt;JwtSettings&gt;()!;
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =&gt;
+    {
+        options.MapInboundClaims = false;   // giữ claim "username", "role"
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwt.Issuer,
+            ValidAudience = jwt.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key)),
+            NameClaimType = "username",
+            RoleClaimType = "role"
+        };
+    });
+builder.Services.AddAuthorization();
+
+// ... sau builder.Build():
+app.UseAuthentication();   // PHẢI trước UseAuthorization
+app.UseAuthorization();</code></pre>
+    <div class="warn">
+      Thiếu <code class="inline">UseAuthentication()</code> → mọi request có token vẫn bị coi là chưa đăng nhập (401).
+    </div>
+
+    <h3 id="p3-8">3.8. Gọi API từ Razor Page (GET / POST / PUT / DELETE)</h3>
+    <p><span class="path">src/Prn232.Fe/Services/ApiClient.cs</span></p>
+    <pre><code>// GET
+var response = await _http.GetAsync($"{_productApiBaseUrl}/api/products/{id}");
+var product = await response.Content.ReadFromJsonAsync&lt;ProductDto&gt;();
+
+// POST
+var response = await _http.PostAsJsonAsync($"{_productApiBaseUrl}/api/products", dto);
+
+// PUT
+var response = await _http.PutAsJsonAsync($"{_productApiBaseUrl}/api/products/{id}", dto);
+
+// DELETE
+var response = await _http.DeleteAsync($"{_productApiBaseUrl}/api/products/{id}");</code></pre>
+    <p>Kiểm tra kết quả:</p>
+    <pre><code>if (!response.IsSuccessStatusCode)
+{
+    var body = await response.Content.ReadAsStringAsync();
+    ErrorMessage = $"API lỗi {(int)response.StatusCode}: {body}";
+    return null;
+}</code></pre>
+    <p>Đăng ký trong <span class="path">Program.cs</span> của FE:</p>
+    <pre><code>builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient&lt;ApiClient&gt;();</code></pre>
+
+    <h3 id="p3-9">3.9. Gắn Bearer token</h3>
+    <pre><code>var token = _httpContextAccessor.HttpContext?.Session.GetString("accessToken");
+
+using var request = new HttpRequestMessage(HttpMethod.Get, url);
+if (!string.IsNullOrEmpty(token))
+{
+    request.Headers.Authorization =
+        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+}
+var response = await _http.SendAsync(request);
+
+if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+{
+    // token hết hạn / sai -> PageModel bắt exception và redirect /Login
+    throw new UnauthorizedAccessException();
+}</code></pre>
+
+    <h3 id="p3-10">3.10. Session: đọc / ghi</h3>
+    <p>Cấu hình trong <span class="path">src/Prn232.Fe/Program.cs</span>:</p>
+    <pre><code>builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =&gt;
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
+// ...
+app.UseSession();   // trước MapRazorPages</code></pre>
+
+    <p>Ghi (trong PageModel sau khi login):</p>
+    <pre><code>HttpContext.Session.SetString("accessToken", result.AccessToken);
+HttpContext.Session.SetString("username", result.Username);
+HttpContext.Session.SetString("role", result.Role);</code></pre>
+
+    <p>Đọc / xoá:</p>
+    <pre><code>var token = HttpContext.Session.GetString("accessToken");
+HttpContext.Session.Clear();     // logout</code></pre>
+
+    <p>Chặn trang khi chưa login:</p>
+    <pre><code>public IActionResult OnGet()
+{
+    if (string.IsNullOrEmpty(HttpContext.Session.GetString("accessToken")))
+        return RedirectToPage("/Login");
+
+    return Page();
+}</code></pre>
+
+    <h3 id="p3-11">3.11. Form Razor + antiforgery</h3>
+    <p>Dùng tag helper — token và cookie tự sinh, không cần viết tay:</p>
+    <pre><code>@page
+@model CreateModel
+
+&lt;form method="post"&gt;
+    &lt;div class="mb-3"&gt;
+        &lt;label asp-for="Input.Name" class="form-label"&gt;Name&lt;/label&gt;
+        &lt;input asp-for="Input.Name" class="form-control" /&gt;
+        &lt;span asp-validation-for="Input.Name" class="text-danger"&gt;&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;button type="submit" class="btn btn-primary"&gt;Lưu&lt;/button&gt;
+&lt;/form&gt;</code></pre>
+    <div class="note">
+      <code class="inline">&lt;form method="post"&gt;</code> + tag helper là đủ: Razor tự chèn
+      <code class="inline">__RequestVerificationToken</code> (ẩn) và cookie antiforgery.
+      Đừng tự gửi form bằng JS mà quên token, sẽ bị <code class="inline">400</code>.
+    </div>
+
+    <p>PageModel tương ứng:</p>
+    <pre><code>public class CreateModel : PageModel
+{
+    private readonly ApiClient _api;
+    public CreateModel(ApiClient api) =&gt; _api = api;
+
+    [BindProperty]
+    public SaveProductDto Input { get; set; } = new();
+
+    public string? ErrorMessage { get; set; }
+
+    public async Task&lt;IActionResult&gt; OnPostAsync()
+    {
+        if (!ModelState.IsValid) return Page();
+
+        try
+        {
+            var created = await _api.CreateAsync(Input);
+            if (created == null)
+            {
+                ErrorMessage = _api.ErrorMessage;
+                return Page();
+            }
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return RedirectToPage("/Login");
+        }
+
+        return RedirectToPage("./Index");
+    }
+}</code></pre>
+
+    <h3 id="p3-12">3.12. Swagger có nút Authorize (Bearer)</h3>
+    <pre><code>builder.Services.AddSwaggerGen(options =&gt;
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Dán token vào đây (không cần chữ Bearer)"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty&lt;string&gt;()
+        }
+    });
+});</code></pre>
+
+    <h3 id="p3-13">3.13. Đặt id HTML theo đề mẫu (rất hay bị mất điểm)</h3>
+    <p>Đề thường yêu cầu id dạng <code class="inline">td_{columnName}_{rowIndex}</code>. Dùng vòng <code class="inline">for</code> để có index:</p>
+    <pre><code>&lt;table&gt;
+@for (int i = 0; i &lt; Model.Students.Count; i++)
+{
+    var s = Model.Students[i];
+    &lt;tr&gt;
+        &lt;td id="td_studentId_@i"&gt;@s.StudentId&lt;/td&gt;
+        &lt;td id="td_fullName_@i"&gt;@s.FullName&lt;/td&gt;
+        &lt;td id="td_majorName_@i"&gt;@s.MajorName&lt;/td&gt;
+        &lt;td id="td_dob_@i"&gt;@s.Dob.ToString("dd/MM/yyyy")&lt;/td&gt;
+    &lt;/tr&gt;
+}&lt;/table&gt;</code></pre>
+
+    <p>Dropdown với id từng option:</p>
+    <pre><code>&lt;select id="sl_mj" name="majorCode"&gt;
+@foreach (var m in Model.Majors)
+{
+    &lt;option id="mj_@m.Code" value="@m.Code" selected="@(m.Code == Model.SelectedMajor)"&gt;
+        @m.Name
+    &lt;/option&gt;
+}
+&lt;/select&gt;
+
+&lt;select id="sl_gen" name="gender"&gt;
+    &lt;option id="gen_male" value="Male" selected="@(Model.SelectedGender == "Male")"&gt;Male&lt;/option&gt;
+    &lt;option id="gen_female" value="Female" selected="@(Model.SelectedGender == "Female")"&gt;Female&lt;/option&gt;
+&lt;/select&gt;</code></pre>
+
+    <p>Radio sort + nút filter:</p>
+    <pre><code>&lt;input type="radio" id="rd_studentName" name="sortBy" value="studentName"
+       checked="@(Model.SortBy == "studentName" || Model.SortBy == null)" /&gt;
+&lt;input type="radio" id="rd_studentId" name="sortBy" value="studentId"
+       checked="@(Model.SortBy == "studentId")" /&gt;
+&lt;input type="radio" id="rd_studentDob" name="sortBy" value="studentDob"
+       checked="@(Model.SortBy == "studentDob")" /&gt;
+
+&lt;input type="submit" id="btn_submit" value="Filter" /&gt;</code></pre>
+    <div class="warn">
+      Đừng quên giữ lại lựa chọn của user sau khi submit: bind các giá trị vào PageModel
+      và dùng <code class="inline">selected</code>/<code class="inline">checked</code> như trên.
+    </div>
+
+    <h3 id="p3-14">3.14. Sinh controller bằng code generator</h3>
+    <pre><code>dotnet aspnet-codegenerator controller \
+  -name ProductsController \
+  -m Product \
+  -dc Prn232Context \
+  -api \
+  -outDir Controllers</code></pre>
+    <p>Sau khi sinh: sửa <code class="inline">[Authorize]</code>, route, DTO, phân trang; xoá các action thừa nếu đề không yêu cầu; kiểm tra lại NuGet (generator có thể thêm package).</p>
+
+    <h3 id="p3-15">3.15. Publish để nộp</h3>
+    <pre><code># Từ thư mục gốc repo
+dotnet publish src/Prn232.ProductApi -c Release -o ./Q1_&lt;MSSV&gt;
+dotnet publish src/Prn232.Fe         -c Release -o ./Q2_&lt;MSSV&gt;</code></pre>
+    <p>Đổi <code class="inline">&lt;MSSV&gt;</code> theo đề. Trước khi nộp kiểm tra lại <a href="#p2-2">checklist</a>.</p>
+
+    <h3>3.16. Bảng tra nhanh “đổi đề thì sửa ở đâu”</h3>
+    <table>
+      <tr><th>Đề đổi gì</th><th>Sửa file</th></tr>
+      <tr><td>Tên model (Product → X)</td><td>scaffold lại <span class="path">*/Models</span>, <span class="path">ProductApi/Dtos</span>, controller, <span class="path">Fe/Models</span>, pages</td></tr>
+      <tr><td>Thêm bảng liên quan</td><td>scaffold lại + <code class="inline">Include</code>/projection + DTO</td></tr>
+      <tr><td>Connection string</td><td><span class="path">AuthApi/appsettings.json</span>, <span class="path">ProductApi/appsettings.json</span></td></tr>
+      <tr><td>JWT Key/Issuer/Audience</td><td>appsettings của <strong>cả 2</strong> API (giống hệt)</td></tr>
+      <tr><td>Route API</td><td><span class="path">Controllers/*.cs</span> + <span class="path">Fe/Services/ApiClient.cs</span></td></tr>
+      <tr><td>Thêm field vào form</td><td><span class="path">Pages/Products/Create|Edit.cshtml</span> + DTO + controller</td></tr>
+      <tr><td>Port</td><td><span class="path">appsettings.json</span> (<code class="inline">Urls</code>) + <span class="path">launchSettings.json</span> + FE base URL</td></tr>
+      <tr><td>Đổi tên project</td><td><code class="inline">.sln</code>, namespace, launchSettings</td></tr>
+    </table>
+  </section>
+
+  <footer>
+    PRN232 exam source — tutorial tự chứa, không cần build. Sửa file này trực tiếp khi cần bổ sung mẹo.
+  </footer>
+</div>
+
+<script>
+  // Nút Copy cho mọi code block (có fallback khi không có clipboard API)
+  document.querySelectorAll('pre').forEach(function (pre) {
+    var btn = document.createElement('button');
+    btn.className = 'copy';
+    btn.type = 'button';
+    btn.textContent = 'Copy';
+    btn.addEventListener('click', function () {
+      var code = pre.querySelector('code');
+      var text = code ? code.innerText : pre.innerText;
+      function done() {
+        btn.textContent = 'Đã copy';
+        setTimeout(function () { btn.textContent = 'Copy'; }, 1200);
+      }
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done);
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) { btn.textContent = 'Lỗi'; }
+        document.body.removeChild(ta);
+      }
+    });
+    pre.appendChild(btn);
+  });
+</script>
+</body>
+</html>

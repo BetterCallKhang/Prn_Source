@@ -1,0 +1,16 @@
+# Build / IDE
+bin/
+obj/
+.vs/
+.vscode/
+
+# Publish để nộp bài
+Q1_*/
+Q2_*/
+
+# Secret / file local (không commit)
+appsettings.*.local.json
+.env
+
+# Graphify (output sinh tự động, rebuild bằng `graphify extract . --code-only`)
+graphify-out/

@@ -1,0 +1,49 @@
+# ============================================================
+# Docker Compose — CHỈ dựng SQL Server cho dev.
+# 3 project .NET vẫn chạy bằng `dotnet run` (port 5000/5001/5002),
+# KHÔNG container hoá app để giữ đúng kiến trúc trong AGENTS.md.
+#
+# Dùng được ở mọi OS có Docker (CachyOS, Windows + Docker Desktop):
+#   docker compose up -d        # bật SQL Server (lần đầu tự pull image)
+#   docker compose ps           # xem trạng thái / health
+#   docker compose down         # tắt, GIỮ data
+#   docker compose down -v      # tắt + xoá data (reset sạch, nạp lại init.sql)
+#
+# Nạp database lần đầu (hoặc sau khi down -v):
+#   docker compose exec db /opt/mssql-tools18/bin/sqlcmd \
+#     -S localhost -U sa -P 'Prn232@Exam123' -C -i /tmp/init.sql
+# ============================================================
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Giữ đúng tên trong README mục 9.1 để lệnh `docker exec prn232-sql ...` vẫn dùng được
+    container_name: prn232-sql
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+      # [SỬA KHI ĐỔI ĐỀ] Đổi mật khẩu ở đây thì phải sửa luôn MyCnn trong
+      # src/Prn232.AuthApi/appsettings.json và src/Prn232.ProductApi/appsettings.json.
+      # Có thể override mà không sửa file: MSSQL_SA_PASSWORD='...' docker compose up -d
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:-Prn232@Exam123}"
+    ports:
+      # Đổi thành "1434:1433" nếu máy đã có service khác chiếm port 1433
+      - "1433:1433"
+    volumes:
+      # Data nằm trong named volume nên `down` rồi `up` không mất dữ liệu
+      - mssql-data:/var/opt/mssql
+      # Mount sẵn script init để nạp bằng sqlcmd (SQL Server không tự chạy script này)
+      - ./src/db/init.sql:/tmp/init.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q 'SELECT 1' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 25s
+
+volumes:
+  mssql-data:

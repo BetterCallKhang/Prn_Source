@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Page Title</title>
+</head>
+
+<body>
+
+    <form method="get">
+        Major
+        <select id="sl_mj">
+            <option id="mj_A" selected>Major A</option>
+            <option id="mj_B">Major B</option>
+            <option id="mj_C">Major C</option>
+        </select>
+
+        Gender
+        <select id="sl_gen">
+            <option selected id="gen_male">Male</option>
+            <option id="gen_female">Female</option>
+        </select>
+        <br />
+        Sort by:
+        <input type="radio" checked id="rd_studentName" /> Student Name &nbsp;
+        <input type="radio" id="rd_studentId" /> StudentId &nbsp;
+        <input type="radio" id="rd_studentDob" /> StudentDob &nbsp;
+        <br />
+        <input type="submit" value="Filter" id="btn_submit" />
+    </form>
+    <h2>List of Students</h2>
+    <table border="1">
+        <tr>
+            <td id="td_studentId_0">1</td>
+            <td id="td_fullName_0">Aaron Smith</td>
+            <td id="td_majorName_0">Major A</td>
+            <td id="td_dob_0">11/11/2000</td>
+        </tr>
+        <tr>
+            <td id="td_studentId_1">2</td>
+            <td id="td_fullName_1">Bob Johnson</td>
+            <td id="td_majorName_1">Major B</td>
+            <td id="td_dob_1">12/12/1999</td>
+        </tr>
+    </table>
+
+</body>
+
+</html>

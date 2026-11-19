@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PRN232 · Nạp DB &amp; DB-first</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="19" height="19">
+          <path d="m7 8-4 4 4 4"/><path d="m17 8 4 4-4 4"/><path d="m14 4-4 16"/>
+        </svg>
+      </div>
+      <div>
+        <strong>PRN232 Toolkit</strong>
+        <span>Code Generator</span>
+      </div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <p class="nav-label">Công cụ</p>
+
+      <button class="nav-item active" data-tool="setup">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3"/><path d="M13 15h4"/>
+        </svg>
+        <span class="label">Nạp DB &amp; DB-first</span>
+        <span class="tag">Mới</span>
+      </button>
+
+      <button class="nav-item" data-tool="db">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>
+        </svg>
+        <span class="label">Cấu trúc bảng</span>
+      </button>
+
+      <p class="nav-label">Sắp ra mắt</p>
+
+      <button class="nav-item" data-tool="models">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m16 18 6-6-6-6"/><path d="m8 6-6 6 6 6"/>
+        </svg>
+        <span class="label">Sinh model EF Core</span>
+        <span class="tag soon">Soon</span>
+      </button>
+
+      <button class="nav-item" data-tool="context">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
+        </svg>
+        <span class="label">Sinh DbContext</span>
+        <span class="tag soon">Soon</span>
+      </button>
+
+      <button class="nav-item" data-tool="crud">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="4" width="20" height="7" rx="2"/><rect x="2" y="13" width="20" height="7" rx="2"/><path d="M6 7.5h.01M6 16.5h.01"/>
+        </svg>
+        <span class="label">Sinh Controller CRUD</span>
+      </button>
+
+      <button class="nav-item" data-tool="razor">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M7 13h4M7 16.5h7"/>
+        </svg>
+        <span class="label">Sinh Razor CRUD</span>
+        <span class="tag soon">Soon</span>
+      </button>
+
+      <button class="nav-item" data-tool="config">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.56V21a2 2 0 1 1-4 0v-.11a1.7 1.7 0 0 0-1.06-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1H3a2 2 0 1 1 0-4h.11A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.56V3a2 2 0 1 1 4 0v.11a1.7 1.7 0 0 0 1 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.12.6.62 1.04 1.23 1.04H21a2 2 0 1 1 0 4h-.11a1.7 1.7 0 0 0-1.49.96Z"/>
+        </svg>
+        <span class="label">Sinh appsettings</span>
+        <span class="tag soon">Soon</span>
+      </button>
+
+      <button class="nav-item" data-tool="seed">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3v18"/><path d="M5 8h14"/><path d="M5 16h14"/>
+        </svg>
+        <span class="label">Sinh script seed</span>
+        <span class="tag soon">Soon</span>
+      </button>
+
+      <button class="nav-item" data-tool="package">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 8v8a2 2 0 0 1-1 1.73l-7 4a2 2 0 0 1-2 0l-7-4A2 2 0 0 1 3 16V8a2 2 0 0 1 1-1.73l7-4a2 2 0 0 1 2 0l7 4A2 2 0 0 1 21 8z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/>
+        </svg>
+        <span class="label">Đóng gói bài nộp</span>
+        <span class="tag soon">Soon</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="ver">v0.2 · DB-first · .NET 8</div>
+      <div class="hint">Bắt đầu bằng cách kéo file .sql vào.</div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn nav-toggle" id="navToggle" aria-label="Mở menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div class="crumbs">
+        <span>Tools</span><span class="sep">/</span><strong id="crumbTitle">Nạp DB &amp; DB-first</strong>
+      </div>
+      <div class="top-actions">
+        <span class="pill">SQL Server</span>
+        <a class="icon-btn" href="../tutorials/index.html" title="Mở tutorial" aria-label="Tutorial">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="M9.2 9a2.8 2.8 0 1 1 4.3 2.4c-.9.6-1.5 1.2-1.5 2.3"/><path d="M12 17h.01"/>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <div class="view" id="view-schema" hidden>
+    <div class="workspace">
+      <!-- Nguồn SQL -->
+      <section class="panel input-panel">
+        <div class="panel-head">
+          <h2>Nguồn SQL</h2>
+          <span class="muted" id="fileMeta">Chưa có file</span>
+        </div>
+
+        <label class="dropzone" id="dropzone" for="fileInput">
+          <span class="dz-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" width="17" height="17">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 9 5-5 5 5"/><path d="M12 4v12"/>
+            </svg>
+          </span>
+          <strong>Kéo file .sql vào đây</strong>
+          <small>hoặc bấm để chọn file · chỉ đọc, không upload</small>
+          <span class="file-name" id="fileName" hidden></span>
+          <input type="file" id="fileInput" accept=".sql,.txt" hidden />
+        </label>
+
+        <div class="divider"><span>hoặc dán SQL</span></div>
+
+        <textarea id="sqlInput" spellcheck="false" placeholder="CREATE TABLE [dbo].[Product] (&#10;  [Id] INT IDENTITY(1,1) PRIMARY KEY,&#10;  [Name] NVARCHAR(150) NOT NULL&#10;);"></textarea>
+
+        <div class="row">
+          <button class="btn primary" id="btnAnalyze">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="4"/>
+            </svg>
+            Phân tích SQL
+          </button>
+        </div>
+        <div class="row row-tight">
+          <button class="btn ghost" id="btnSample">Nạp ví dụ</button>
+          <button class="btn ghost" id="btnClear">Xoá</button>
+        </div>
+
+        <div class="tips">
+          <b>Đọc được:</b> <code>CREATE TABLE</code>, <code>PRIMARY KEY</code>,
+          <code>FOREIGN KEY ... REFERENCES</code> (cả <code>ALTER TABLE</code>),
+          <code>CHECK</code>, <code>DEFAULT</code>, <code>UNIQUE</code>,
+          <code>IDENTITY</code>, <code>NOT NULL</code>, computed column.
+        </div>
+      </section>
+
+      <!-- Kết quả: field & ràng buộc -->
+      <section class="panel result-panel">
+        <div class="result-toolbar">
+          <div class="title">
+            <h2>Field &amp; ràng buộc</h2>
+            <span class="muted" id="resultMeta">Chưa có dữ liệu</span>
+          </div>
+          <div class="tools">
+            <label class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+              </svg>
+              <input id="searchInput" type="search" placeholder="Tìm bảng hoặc field…" autocomplete="off" />
+            </label>
+            <button class="btn ghost sm" id="btnExpand">Mở rộng</button>
+            <button class="btn ghost sm" id="btnCollapse">Thu gọn</button>
+          </div>
+        </div>
+
+        <div class="result-scroll" id="resultScroll">
+          <div class="empty" id="emptyState">
+            <div class="art">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="34" height="34">
+                <ellipse cx="12" cy="5" rx="7" ry="2.6"/><path d="M5 5v6c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6V5"/><path d="M5 11v6c0 1.4 3.1 2.6 7 2.6s7-1.2 7-2.6v-6"/>
+              </svg>
+            </div>
+            <h3>Chưa có dữ liệu</h3>
+            <p>Kéo file <b>.sql</b> vào panel bên trái để xem field, kiểu dữ liệu, ràng buộc và khóa ngoại của từng bảng.</p>
+          </div>
+          <div class="table-list" id="tableList"></div>
+          <div class="no-result" id="noResult" hidden></div>
+        </div>
+      </section>
+      </div>
+    </div>
+
+    <!-- ============ SINH CONTROLLER CRUD ============ -->
+    <div class="view" id="view-crud" hidden>
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Code generator</span>
+              <h1>Sinh Controller CRUD</h1>
+              <p>
+                Chọn 1 bảng đã import (hoặc dán <code>CREATE TABLE</code>) → tick action cần sinh
+                (list / CRUD) → chọn cột search &amp; sort → copy code. Code dùng EF Core async,
+                <code>[ApiController]</code>, có sẵn nút copy.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Chọn bảng</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Tuỳ chọn</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Scaffold / copy</span>
+            </div>
+          </section>
+
+          <div class="crud-grid">
+            <section class="card">
+              <div class="card-head">
+                <h2>1. Chọn bảng</h2>
+                <span class="muted" id="genSourceMeta">Chưa có bảng</span>
+              </div>
+
+              <label class="field">
+                <span>Bảng đã phân tích</span>
+                <select class="input" id="genTable"></select>
+                <small>Import file SQL ở mục “Cấu trúc bảng” để có danh sách.</small>
+              </label>
+
+              <div class="divider"><span>hoặc dán</span></div>
+
+              <label class="field">
+                <span>Tên bảng hoặc CREATE TABLE</span>
+                <textarea class="input textarea" id="genPaste" spellcheck="false" placeholder="Product&#10;hoặc dán nguyên: CREATE TABLE [dbo].[Product] ( ... )"></textarea>
+              </label>
+              <button type="button" class="btn" id="btnUsePaste">Dùng nội dung dán</button>
+
+              <p class="out-hint">
+                Ở tab “Cấu trúc bảng”, bấm nút <b>Sinh CRUD</b> trên từng bảng để chuyển thẳng sang đây.
+              </p>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <h2>2. Tuỳ chọn</h2>
+                <span class="muted">Sửa theo project của bạn</span>
+              </div>
+
+              <div class="opt-grid">
+                <label class="field">
+                  <span>Controller</span>
+                  <input class="input" id="genController" value="ProductsController" spellcheck="false" />
+                </label>
+                <label class="field">
+                  <span>DbContext</span>
+                  <input class="input" id="genContext" value="Prn232Context" spellcheck="false" />
+                </label>
+                <label class="field">
+                  <span>Namespace</span>
+                  <input class="input" id="genNamespace" value="Prn232.ProductApi.Controllers" spellcheck="false" />
+                </label>
+                <label class="field">
+                  <span>Namespace của model</span>
+                  <input class="input" id="genModelNs" value="Prn232.ProductApi.Models" spellcheck="false" />
+                </label>
+              </div>
+
+              <label class="check-row mt-10">
+                <input type="checkbox" id="genAuthorize" checked />
+                <span>Thêm <code>[Authorize]</code> cho toàn controller (ProductApi trong repo yêu cầu JWT)</span>
+              </label>
+
+              <div class="opt-section">
+                <div class="opt-section-head">
+                  <span class="opt-title">Action sinh ra</span>
+                  <span class="muted">Bỏ tick action không cần</span>
+                </div>
+                <div class="action-grid">
+                  <label class="check-row"><input type="checkbox" class="gen-act" value="list" checked /><span>List <code>GET /api/…</code></span></label>
+                  <label class="check-row"><input type="checkbox" class="gen-act" value="detail" checked /><span>Chi tiết <code>GET {id}</code></span></label>
+                  <label class="check-row"><input type="checkbox" class="gen-act" value="create" checked /><span>Tạo <code>POST</code></span></label>
+                  <label class="check-row"><input type="checkbox" class="gen-act" value="update" checked /><span>Sửa <code>PUT {id}</code></span></label>
+                  <label class="check-row"><input type="checkbox" class="gen-act" value="delete" checked /><span>Xoá <code>DELETE {id}</code></span></label>
+                </div>
+              </div>
+
+              <div class="opt-section">
+                <div class="opt-section-head">
+                  <span class="opt-title">Search từ khóa</span>
+                  <span class="muted">Cột text — tick cột muốn tìm</span>
+                </div>
+                <div class="checks" id="genSearchFields"></div>
+              </div>
+
+              <div class="opt-section">
+                <div class="opt-section-head">
+                  <span class="opt-title">Sort</span>
+                  <span class="muted">Cột text/số/ngày — tick và chọn chiều</span>
+                </div>
+                <div class="sort-list" id="genSortFields"></div>
+              </div>
+
+              <div class="opt-section">
+                <div class="opt-section-head">
+                  <span class="opt-title">Phân trang</span>
+                  <span class="muted">Chỉ áp dụng cho list</span>
+                </div>
+                <div class="sort-row">
+                  <label class="check-row">
+                    <input type="checkbox" id="genPaging" />
+                    <span>Bật <code>?page=1&amp;pageSize=…</code></span>
+                  </label>
+                  <label class="page-size">
+                    <span>Số item / trang</span>
+                    <input type="number" class="input mini" id="genPageSize" value="10" min="1" max="500" step="1" disabled />
+                  </label>
+                </div>
+              </div>
+
+              <div class="opt-section">
+                <div class="opt-section-head">
+                  <span class="opt-title">Message trả về</span>
+                  <span class="muted">Dùng <code>{model}</code>, <code>{table}</code>, <code>{id}</code></span>
+                </div>
+                <div class="msg-grid">
+                  <label class="field">
+                    <span>404 Not found</span>
+                    <input class="input" id="msgNotFound" value="Không tìm thấy {model}." spellcheck="false" />
+                  </label>
+                  <label class="field">
+                    <span>400 Khoá URL ≠ body</span>
+                    <input class="input" id="msgMismatch" value="Khóa trên URL không khớp với body." spellcheck="false" />
+                  </label>
+                  <label class="field">
+                    <span>401 Thiếu / sai token</span>
+                    <input class="input" id="msgUnauthorized" value="Chưa đăng nhập hoặc token không hợp lệ." spellcheck="false" />
+                  </label>
+                  <label class="field">
+                    <span>403 Không đủ quyền</span>
+                    <input class="input" id="msgForbidden" value="Bạn không có quyền truy cập." spellcheck="false" />
+                  </label>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">3</span>
+              <h2>Cách 1 · Scaffold bằng <code>dotnet-aspnet-codegenerator</code></h2>
+              <span class="pill ml-auto">Khuyến nghị</span>
+            </div>
+            <p class="step-desc">
+              Cách chính thức của .NET: cần cài <b>tool</b> (global) và <b>package</b> (trong project API)
+              một lần, sau đó mỗi bảng chỉ cần 1 lệnh là có controller CRUD đầy đủ.
+              Model phải được scaffold trước (DB-first).
+            </p>
+
+            <div class="code-box">
+              <pre id="cmdGenInstall"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdGenInstall">Sao chép</button>
+            </div>
+
+            <p class="out-hint">Chạy trong thư mục project API (vd: <code>src/Prn232.ProductApi</code>):</p>
+
+            <div class="code-box">
+              <pre id="cmdGenScaffold"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdGenScaffold">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li><code>-name</code> tên controller · <code>-async</code> action async · <code>-api</code> controller API.</li>
+              <li><code>-m</code> class model đã scaffold · <code>-dc</code> DbContext · <code>-outDir Controllers</code>.</li>
+              <li>Thiếu tool → lỗi <code>dotnet-aspnet-codegenerator: command not found</code>: cài lại và thêm <code>%USERPROFILE%\.dotnet\tools</code> vào PATH.</li>
+              <li><code>-dc</code> phải <b>trùng đúng tên class DbContext</b> đã scaffold (vd <code>Prn232Context</code>), nếu không tool báo <i>“No DbContext was found”</i>.</li>
+              <li>Chạy lệnh trong project chứa cả model lẫn DbContext; model ở project khác thì <code>-m</code> sẽ không thấy.</li>
+              <li>Tool sinh controller <b>chưa có</b> <code>[Authorize]</code> — thêm tay nếu API yêu cầu JWT.</li>
+              <li>Máy thi không cài được tool/package (offline) → dùng <b>Cách 2</b> bên dưới.</li>
+            </ul>
+          </section>
+
+          <section class="card code-card">
+            <div class="card-head">
+              <h2>4. Cách 2 · Controller tự sinh (không cần cài tool)</h2>
+              <div class="head-actions">
+                <span class="muted" id="genMeta">Chọn bảng để sinh code</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadCs">Tải .cs</button>
+              </div>
+            </div>
+
+            <div class="code-box big">
+              <pre id="genCode"></pre>
+              <button type="button" class="copy-btn" data-copy="genCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Cần scaffold model trước (mục “Nạp DB &amp; DB-first”) — controller dùng <code>_context.Set&lt;Model&gt;()</code> nên không phụ thuộc tên DbSet.</li>
+              <li>Route: <code>api/[controller]</code> — ví dụ <code>ProductsController</code> → <code>/api/Products</code>.</li>
+              <li>Tick ở panel “Tuỳ chọn”: cột <b>text</b> → sinh <code>?keyword=</code>, cột <b>text/số/ngày</b> → sort, bật <b>phân trang</b> → <code>?page=1&amp;pageSize=…</code> và trả <code>{ total, page, pageSize, items }</code>.</li>
+              <li>Nhớ đăng ký <code>AddDbContext</code> + JWT trong <code>Program.cs</code>.</li>
+            </ul>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">5</span>
+              <h2>Kết quả mẫu của endpoint</h2>
+            </div>
+            <p class="step-desc">
+              Chọn endpoint để xem HTTP status + body mẫu. Giá trị mẫu sinh theo kiểu cột:
+              text → <code>"string"</code>, số → <code>0</code>, bit → <code>false</code>, ngày → chuỗi ISO, guid → guid rỗng.
+            </p>
+
+            <div class="sample-bar">
+              <select class="input" id="sampleEndpoint"></select>
+              <button type="button" class="btn" id="btnSampleResult">Sinh kết quả mẫu</button>
+            </div>
+
+            <div class="sample-out" id="sampleOut"></div>
+          </section>
+
+          <section class="card step" id="authMsgCard">
+            <div class="step-head">
+              <span class="step-no">6</span>
+              <h2>Message 401 / 403 (<code>Program.cs</code>)</h2>
+            </div>
+            <p class="step-desc">
+              Controller <b>không tự trả</b> 401 có body — middleware JWT trả 401 rỗng.
+              Dán đoạn dưới vào <b>trong</b> <code>.AddJwtBearer(options => { ... })</code> của
+              <code>Prn232.ProductApi/Program.cs</code>, giữ nguyên <code>TokenValidationParameters</code> phía trên.
+            </p>
+
+            <div class="code-box">
+              <pre id="authEventsCode"></pre>
+              <button type="button" class="copy-btn" data-copy="authEventsCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li><code>context.HandleResponse()</code> để chặn body mặc định; thiếu dòng này sẽ bị ghi đè.</li>
+              <li>Message lấy từ ô <b>401</b> / <b>403</b> ở panel “Tuỳ chọn”.</li>
+              <li>403 chỉ xảy ra khi dùng <code>[Authorize(Roles = "...")]</code>; controller mặc định không phân quyền.</li>
+              <li>Ô 404 / 400 nằm trong controller nên sửa trực tiếp ở panel là code sinh ra đổi theo.</li>
+            </ul>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ HƯỚNG DẪN NẠP DB & DB-FIRST ============ -->
+    <div class="view" id="view-setup">
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Quy trình làm bài</span>
+              <h1>Nạp database &amp; kết nối DB-first</h1>
+              <p>
+                Đề cho file <code>.sql</code> để nạp DB. Chạy script → lấy connection string
+                bằng <b>Windows Authentication</b> (không dùng <code>sa</code>) → scaffold model
+                → cấu hình API → chạy.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Kết nối</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Chạy SQL</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Scaffold</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>4</b> Chạy app</span>
+            </div>
+          </section>
+
+          <div class="note-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5"/><path d="M12 17.5h.01"/>
+            </svg>
+            <p>
+              <b>Vì sao dùng Windows Authentication?</b> Không cần nhớ/đổi mật khẩu <code>sa</code>,
+              không vướng policy mật khẩu hay trạng thái login bị disable. Chỉ cần user Windows
+              hiện tại có quyền trên SQL Server — đúng như lúc bạn mở SSMS rồi chạy script.
+            </p>
+          </div>
+
+          <!-- Thông tin kết nối + output -->
+          <section class="card conn-card">
+            <div class="card-head">
+              <h2>1. Thông tin kết nối</h2>
+              <span class="muted">Sửa theo đề, lệnh bên dưới tự cập nhật</span>
+            </div>
+
+            <div class="conn-grid">
+              <div class="form-col">
+                <label class="field">
+                  <span>Server</span>
+                  <input class="input" id="connServer" type="text" value="localhost" spellcheck="false" />
+                  <small>SQL Express: <code>.\SQLEXPRESS</code> · Docker: <code>localhost,1433</code></small>
+                </label>
+
+                <label class="field">
+                  <span>Database</span>
+                  <input class="input" id="connDb" type="text" value="Prn232Exam" spellcheck="false" />
+                  <small>Đúng tên DB mà script đề tạo ra.</small>
+                </label>
+
+                <div class="field">
+                  <span>Xác thực</span>
+                  <div class="radio-row">
+                    <label class="radio">
+                      <input type="radio" name="auth" value="windows" checked />
+                      <span>Windows <small>(Trusted_Connection, khuyến nghị)</small></span>
+                    </label>
+                    <label class="radio">
+                      <input type="radio" name="auth" value="sql" />
+                      <span>SQL Server <small>(user/password)</small></span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="sql-auth" id="sqlAuthFields" hidden>
+                  <label class="field">
+                    <span>User</span>
+                    <input class="input" id="connUser" type="text" value="sa" spellcheck="false" />
+                  </label>
+                  <label class="field">
+                    <span>Password</span>
+                    <input class="input" id="connPass" type="text" value="" spellcheck="false" />
+                  </label>
+                </div>
+
+                <label class="check-row">
+                  <input type="checkbox" id="trustCert" checked />
+                  <span>Thêm <code>TrustServerCertificate=True</code> (tránh lỗi certificate)</span>
+                </label>
+              </div>
+
+              <div class="out-col">
+                <div class="out-block">
+                  <div class="out-head">
+                    <span>Connection string</span>
+                    <button type="button" class="copy-btn" data-copy="outConn">Sao chép</button>
+                  </div>
+                  <pre id="outConn"></pre>
+                </div>
+
+                <div class="out-block">
+                  <div class="out-head">
+                    <span>appsettings.json (dùng cho cả 2 API)</span>
+                    <button type="button" class="copy-btn" data-copy="outJson">Sao chép</button>
+                  </div>
+                  <pre id="outJson"></pre>
+                </div>
+
+                <p class="out-hint">
+                  Key <code>MyCnn</code> khớp với <code>Program.cs</code> của AuthApi/ProductApi trong repo này.
+                  FE không cần connection string.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <!-- Bước 2: chạy SQL -->
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">2</span>
+              <h2>Chạy file SQL để nạp database</h2>
+            </div>
+            <p class="step-desc">
+              Mở file script đề cho, chạy bằng <code>sqlcmd</code> (hoặc SSMS → mở file → Execute).
+              Script thường đã có <code>CREATE DATABASE</code> + <code>USE</code>, nên chỉ cần chạy 1 lần.
+            </p>
+            <div class="code-box">
+              <pre id="cmdRunSql"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdRunSql">Sao chép</button>
+            </div>
+            <ul class="bullets">
+              <li><b>Windows auth:</b> cờ <code>-E</code> — dùng user Windows hiện tại, không cần <code>-U/-P</code>.</li>
+              <li><b>SSMS:</b> chọn Authentication = <i>Windows Authentication</i>, mở <code>.sql</code> rồi Execute (F5).</li>
+              <li>Script không tạo DB thì tạo trước: <code>sqlcmd -S localhost -E -Q "CREATE DATABASE [&lt;DbName&gt;]"</code>.</li>
+              <li>Nếu đề yêu cầu đúng tên DB khác, sửa ô Database phía trên rồi chạy lại script (nếu cần).</li>
+            </ul>
+            <div class="code-box">
+              <pre id="cmdCheck"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdCheck">Sao chép</button>
+            </div>
+            <div class="step-actions">
+              <button type="button" class="btn ghost sm" id="btnGoSchema">Xem field &amp; ràng buộc của DB →</button>
+            </div>
+          </section>
+
+          <!-- Bước 3: scaffold -->
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">3</span>
+              <h2>Scaffold model (DB-first)</h2>
+            </div>
+            <p class="step-desc">
+              Cài tool + package một lần, sau đó scaffold từ database vừa nạp.
+              <b>Bắt buộc</b> có <code>--no-onconfiguring</code> để connection string nằm trong
+              <code>appsettings.json</code> chứ không hard-code trong DbContext.
+            </p>
+
+            <div class="code-box">
+              <pre id="cmdInstall"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdInstall">Sao chép</button>
+            </div>
+
+            <div class="code-box">
+              <pre id="cmdScaffold"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdScaffold">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Chạy trong thư mục project cần có model (ví dụ <code>src/Prn232.ProductApi</code>).</li>
+              <li><code>-o Models</code>: thư mục output · <code>-f</code>: ghi đè khi scaffold lại sau khi đổi đề.</li>
+              <li>Chỉ scaffold vài bảng: thêm <code>-t Product -t Account</code>.</li>
+              <li>Đổi tên DbContext: thêm <code>-c Prn232Context</code>.</li>
+              <li>Sau khi scaffold: xoá <code>OnConfiguring</code> nếu có, đăng ký <code>AddDbContext</code> trong <code>Program.cs</code>.</li>
+            </ul>
+          </section>
+
+          <!-- Bước 4: cấu hình -->
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">4</span>
+              <h2>Cấu hình &amp; chạy</h2>
+            </div>
+            <p class="step-desc">
+              Dán connection string vào <b>cả hai</b> <code>appsettings.json</code> của
+              <code>Prn232.AuthApi</code> và <code>Prn232.ProductApi</code> (cùng key <code>MyCnn</code>).
+              JWT <code>Key/Issuer/Audience</code> phải giống hệt nhau ở 2 API.
+            </p>
+            <div class="code-box">
+              <pre id="cmdBuild"></pre>
+              <button type="button" class="copy-btn" data-copy="cmdBuild">Sao chép</button>
+            </div>
+            <ul class="bullets">
+              <li>Chạy lần lượt AuthApi (:5001) → ProductApi (:5002) → FE (:5000).</li>
+              <li>Đăng nhập bằng account seed trong script (ví dụ <code>admin/123456</code>).</li>
+              <li>Sửa DB xong thì scaffold lại — không dùng migration (đề thi DB-first).</li>
+            </ul>
+          </section>
+
+          <!-- Lỗi thường gặp -->
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">?</span>
+              <h2>Lỗi thường gặp</h2>
+            </div>
+            <div class="err-wrap">
+              <table class="err-table">
+                <thead>
+                  <tr><th>Lỗi</th><th>Nguyên nhân</th><th>Cách xử lý</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><code>A network-related or instance-specific error</code></td>
+                    <td>Sai tên server / SQL Server chưa chạy</td>
+                    <td>Kiểm tra service; SQL Express dùng <code>.\SQLEXPRESS</code>, Docker dùng <code>localhost,1433</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>Login failed for user ...</code> (Windows)</td>
+                    <td>User Windows chưa có login/quyền trên DB</td>
+                    <td>SSMS → Security → Logins → thêm user; hoặc chuyển sang SQL auth.</td>
+                  </tr>
+                  <tr>
+                    <td><code>The certificate chain was issued by an authority that is not trusted</code></td>
+                    <td>SQL Server dùng certificate self-signed</td>
+                    <td>Bật <code>TrustServerCertificate=True</code> (đã bật mặc định ở trên).</td>
+                  </tr>
+                  <tr>
+                    <td><code>Cannot open database "X" requested by the login</code></td>
+                    <td>Chưa chạy script hoặc sai tên DB</td>
+                    <td>Chạy lại script; kiểm tra <code>SELECT name FROM sys.databases</code>.</td>
+                  </tr>
+                  <tr>
+                    <td><code>dotnet ef: command not found</code></td>
+                    <td>Chưa cài hoặc chưa có trong PATH</td>
+                    <td><code>dotnet tool install --global dotnet-ef</code>; thêm <code>%USERPROFILE%\.dotnet\tools</code> (Windows) hoặc <code>~/.dotnet/tools</code> vào PATH.</td>
+                  </tr>
+                  <tr>
+                    <td><code>Unable to connect... Windows auth</code> khi DB chạy Docker/Linux</td>
+                    <td>SQL Server trên Linux không hỗ trợ Windows Authentication</td>
+                    <td>Chọn xác thực <b>SQL Server</b> ở trên và dùng user/password thật của container.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- Checklist -->
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">✓</span>
+              <h2>Checklist trước khi nộp</h2>
+            </div>
+            <ul class="checklist">
+              <li>Script đề đã chạy, DB có đúng bảng + seed data.</li>
+              <li>Scaffold lại sau lần sửa DB cuối cùng, model khớp field thật.</li>
+              <li>Connection string giống nhau ở 2 API, JWT key giống nhau.</li>
+              <li>Không commit mật khẩu thật; connection string chỉ để trong appsettings của bài nộp.</li>
+              <li>Chạy thử login → list → create → edit → delete.</li>
+            </ul>
+          </section>
+
+        </div>
+      </div>
+    </div>
+
+    <footer class="statusbar">
+      <span id="stats">0 bảng · 0 field · 0 FK · 0 CHECK</span>
+      <span id="status"><span class="dot"></span>Sẵn sàng</span>
+    </footer>
+  </div>
+</div>
+
+<div class="toast-layer" id="toasts"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
