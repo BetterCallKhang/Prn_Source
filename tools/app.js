@@ -381,14 +381,40 @@
   // =====================================================================
   // TRẠNG THÁI
   // =====================================================================
+  const DEFAULT_MESSAGES = {
+    notFound: "Không tìm thấy {model}.",
+    validation: "Dữ liệu không hợp lệ.",
+    mismatch: "Khóa trên URL không khớp với body.",
+    unauthorized: "Chưa đăng nhập hoặc token không hợp lệ.",
+    forbidden: "Bạn không có quyền truy cập."
+  };
+
   const state = {
     tables: [],
     relations: [],
     ids: new Map(), // tên bảng -> id DOM
     query: "",
     genTable: null,
-    genCode: ""
+    genCode: "",
+    ctxCode: "",
+    razorCode: "",
+    razorCs: "",
+    loginCode: "",
+    loginApiCode: "",
+    linqCode: "",
+    odataCode: "",
+    messages: { ...DEFAULT_MESSAGES },
+    customMessages: [] // message thêm tự do qua nút “Thêm message” (status + nội dung)
   };
+
+  // Message tùy chỉnh (thêm mới) — ưu tiên theo cặp (endpoint, status) của từng scenario.
+  function customMsg(endpoint, status) {
+    const list = state.customMessages.filter(
+      (m) => m.endpoint === endpoint && String(m.status) === String(status)
+    );
+    const found = list[list.length - 1];
+    return found && found.text && found.text.trim() ? found : null;
+  }
 
   // =====================================================================
   // RENDER DANH SÁCH BẢNG
@@ -854,10 +880,32 @@
 
     const keys = genKeys(table);
 
-    const msg404 = csMessage($("#msgNotFound").value, model, table.name, keys);
-    const msgMismatch = csMessage($("#msgMismatch").value, model, table.name, keys);
-    const msg401 = csLiteral($("#msgUnauthorized").value, model, table.name);
-    const msg403 = csLiteral($("#msgForbidden").value, model, table.name);
+    const cDetail = customMsg("detail", 404);
+    const msg404 = csMessage(cDetail && cDetail.text.trim() ? cDetail.text : state.messages.notFound, model, table.name, keys);
+    const cCreate = customMsg("create", 400);
+    const msgCreateValidation = csMessage(cCreate && cCreate.text.trim() ? cCreate.text : state.messages.validation, model, table.name, keys);
+    const cUpdate404 = customMsg("update", 404);
+    const msgUpdateNotFound = csMessage(cUpdate404 && cUpdate404.text.trim() ? cUpdate404.text : state.messages.notFound, model, table.name, keys);
+    const cUpdate400 = customMsg("update", 400);
+    const msgUpdateMismatch = csMessage(cUpdate400 && cUpdate400.text.trim() ? cUpdate400.text : state.messages.mismatch, model, table.name, keys);
+    const msgUpdateValidation = csMessage(cUpdate400 && cUpdate400.text.trim() ? cUpdate400.text : state.messages.validation, model, table.name, keys);
+    const cDelete = customMsg("delete", 404);
+    const msgDeleteNotFound = csMessage(cDelete && cDelete.text.trim() ? cDelete.text : state.messages.notFound, model, table.name, keys);
+    const cAuth401 = customMsg("auth", 401);
+    const msg401 = csLiteral(cAuth401 && cAuth401.text.trim() ? cAuth401.text : state.messages.unauthorized, model, table.name);
+    const cAuth403 = customMsg("auth", 403);
+    const msg403 = csLiteral(cAuth403 && cAuth403.text.trim() ? cAuth403.text : state.messages.forbidden, model, table.name);
+    const cCreate201 = state.customMessages.filter((m) => m.endpoint === "create" && String(m.status) === "201").pop() || null;
+    const cUpdate204 = state.customMessages.filter((m) => m.endpoint === "update" && String(m.status) === "204").pop() || null;
+    const cDelete204 = state.customMessages.filter((m) => m.endpoint === "delete" && String(m.status) === "204").pop() || null;
+    const cList200 = state.customMessages.filter((m) => m.endpoint === "list" && String(m.status) === "200").pop() || null;
+    const cDetail200 = state.customMessages.filter((m) => m.endpoint === "detail" && String(m.status) === "200").pop() || null;
+
+    // Body response khi có custom: chỉ message (đã bỏ custom field)
+    const bodyExpr = (entry, fallbackExpr) => {
+      if (!entry) return fallbackExpr;
+      return `new { message = ${csMessage(entry.text, model, table.name, keys)} }`;
+    };
 
     const route = keys.map((k) => `{${k.param}${k.route}}`).join("/");
     const params = keys.map((k) => `${k.type} ${k.param}`).join(", ");
@@ -934,7 +982,10 @@
       if (!chain && pagingOn) chain = `.OrderBy(e => e.${keys[0].prop})`;
 
       L.push("");
-      if (pagingOn) {
+      const cList200 = customMsg("list", 200);
+      if (cList200) {
+        L.push(`        return Ok(${bodyExpr(cList200)});`);
+      } else if (pagingOn) {
         L.push("        if (page < 1) page = 1;");
         L.push(`        if (pageSize < 1) pageSize = ${pageSize};`);
         L.push("");
@@ -968,8 +1019,12 @@
       L.push("    {");
       L.push(`        var item = await _context.Set<${model}>().FindAsync(${findArgs});`);
       L.push("        if (item == null)");
-      L.push(`            return NotFound(new { message = ${msg404} });`);
-      L.push("        return Ok(item);");
+      L.push(`            return NotFound(${bodyExpr(cDetail, `new { message = ${msg404} }`)});`);
+      if (cDetail200) {
+        L.push(`        return Ok(${bodyExpr(cDetail200)});`);
+      } else {
+        L.push("        return Ok(item);");
+      }
       L.push("    }");
     }
 
@@ -981,12 +1036,14 @@
       L.push(`    public async Task<ActionResult<${model}>> Create(${model} model)`);
       L.push("    {");
       L.push("        if (!ModelState.IsValid)");
-      L.push("            return BadRequest(ModelState);");
+      L.push(`            return BadRequest(${bodyExpr(cCreate, "new { message = " + msgCreateValidation + " }")});`);
       L.push("");
       L.push(`        _context.Set<${model}>().Add(model);`);
       L.push("        await _context.SaveChangesAsync();");
       L.push("");
-      if (acts.detail) {
+      if (cCreate201) {
+        L.push(`        return StatusCode(${cCreate201.status}, ${bodyExpr(cCreate201)});`);
+      } else if (acts.detail) {
         L.push(`        return CreatedAtAction(nameof(GetById), new { ${createdArgs} }, model);`);
       } else {
         L.push(`        return Created($"/api/${apiBase}/${createdUrl}", model);`);
@@ -1002,9 +1059,9 @@
       L.push(`    public async Task<IActionResult> Update(${params}, ${model} model)`);
       L.push("    {");
       L.push(`        if (${mismatch})`);
-      L.push(`            return BadRequest(new { message = ${msgMismatch} });`);
+      L.push(`            return BadRequest(${bodyExpr(cUpdate400, "new { message = " + msgUpdateMismatch + " }")});`);
       L.push("        if (!ModelState.IsValid)");
-      L.push("            return BadRequest(ModelState);");
+      L.push(`            return BadRequest(${bodyExpr(cUpdate400, "new { message = " + msgUpdateValidation + " }")});`);
       L.push("");
       L.push(`        _context.Set<${model}>().Update(model);`);
       L.push("        try");
@@ -1014,10 +1071,14 @@
       L.push("        catch (DbUpdateConcurrencyException)");
       L.push("        {");
       L.push(`            if (!await _context.Set<${model}>().AnyAsync(e => ${anyExpr}))`);
-      L.push(`                return NotFound(new { message = ${msg404} });`);
+      L.push(`                return NotFound(${bodyExpr(cUpdate404, "new { message = " + msgUpdateNotFound + " }")});`);
       L.push("            throw;");
       L.push("        }");
-      L.push("        return NoContent();");
+      if (cUpdate204) {
+        L.push(`        return StatusCode(${cUpdate204.status}, ${bodyExpr(cUpdate204)});`);
+      } else {
+        L.push("        return NoContent();");
+      }
       L.push("    }");
     }
 
@@ -1030,11 +1091,15 @@
       L.push("    {");
       L.push(`        var item = await _context.Set<${model}>().FindAsync(${findArgs});`);
       L.push("        if (item == null)");
-      L.push(`            return NotFound(new { message = ${msg404} });`);
+      L.push(`            return NotFound(${bodyExpr(cDelete, "new { message = " + msgDeleteNotFound + " }")});`);
       L.push("");
       L.push(`        _context.Set<${model}>().Remove(item);`);
       L.push("        await _context.SaveChangesAsync();");
-      L.push("        return NoContent();");
+      if (cDelete204) {
+        L.push(`        return StatusCode(${cDelete204.status}, ${bodyExpr(cDelete204)});`);
+      } else {
+        L.push("        return NoContent();");
+      }
       L.push("    }");
     }
 
@@ -1093,9 +1158,710 @@
     refreshSampleOptions();
   }
 
+  // Sinh controller OData CRUD cho 1 bảng: list dung [EnableQuery] (IQueryable -> $filter/$orderby/$top/$skip/$count).
+  function refreshOdataOptions() {
+    const sel = $("#odataTable");
+    if (!sel) return;
+    const list = state.tables.slice();
+    if (state.genTable) {
+      const fresh = state.tables.find((t) => t.name === state.genTable.name);
+      if (fresh) state.genTable = fresh;
+      else if (!list.some((t) => t.name === state.genTable.name)) list.unshift(state.genTable);
+    }
+    sel.innerHTML = list.length
+      ? list.map((t) => `<option value="${esc(t.name)}">${esc(t.name)} · ${t.columns.length} field</option>`).join("")
+      : `<option value="">— chưa có bảng —</option>`;
+    if (state.genTable) sel.value = state.genTable.name;
+    else if (list.length) sel.value = list[0].name;
+    renderOdata();
+  }
+
+  // Code controller OData CRUD: GET list -> IQueryable + [EnableQuery]; GET/POST/PUT/DELETE dung EF.
+  function renderOdata() {
+    const codeEl = $("#odataCode");
+    if (!codeEl) return;
+    const sel = $("#odataTable");
+    const name = (sel && sel.value) || (state.genTable && state.genTable.name) || "";
+    const table = state.tables.find((t) => t.name === name) || state.genTable || null;
+    if (!table) {
+      codeEl.textContent = "// Chọn bảng để sinh controller OData CRUD.";
+      $("#odataMeta").textContent = "Chọn bảng để sinh code";
+      state.odataCode = "";
+      return;
+    }
+
+    const model = pascal(table.name);
+    const controller = ($("#genController").value.trim() || pluralize(model) + "Controller")
+      .replace(/\.cs$/i, "")
+      .replace(/Controller$/i, "") + "Controller";
+    const context = $("#genContext").value.trim() || "Prn232Context";
+    const ns = ($("#genNamespace").value.trim() || "Prn232.ProductApi.Controllers").replace(/[;\s]+$/, "");
+    const modelNs = ($("#genModelNs").value.trim() || "Prn232.ProductApi.Models").replace(/[;\s]+$/, "");
+    const authorize = $("#genAuthorize").checked;
+
+    const keys = genKeys(table);
+    const key = keys[0];
+    const cDetail = customMsg("detail", 404);
+    const msgDetail = csMessage(cDetail && cDetail.text.trim() ? cDetail.text : state.messages.notFound, model, table.name, keys);
+    const cUpdate404 = customMsg("update", 404);
+    const msgUpdateNotFound = csMessage(cUpdate404 && cUpdate404.text.trim() ? cUpdate404.text : state.messages.notFound, model, table.name, keys);
+
+    const apiBase = controller.replace(/Controller$/i, "");
+
+    const L = [];
+    L.push(`// [SỬA KHI ĐỔI ĐỔI] Controller OData CRUD cho bảng ${table.name}.`);
+    L.push("using Microsoft.AspNetCore.Mvc;");
+    if (authorize) L.push("using Microsoft.AspNetCore.Authorization;");
+    L.push("using Microsoft.AspNetCore.OData;");
+    L.push("using Microsoft.EntityFrameworkCore;");
+    L.push(`using ${modelNs};`);
+    L.push("");
+    L.push(`namespace ${ns};`);
+    L.push("");
+    L.push("[ApiController]");
+    L.push('[Route("api/[controller]")]');
+    if (authorize) L.push("[Authorize]");
+    L.push(`public class ${controller} : ControllerBase`);
+    L.push("{");
+    L.push(`    private readonly ${context} _context;`);
+    L.push("");
+    L.push(`    public ${controller}(${context} context)`);
+    L.push("    {");
+    L.push("        _context = context;");
+    L.push("    }");
+    L.push("");
+    L.push("    // GET: api/" + apiBase);
+    L.push("    [HttpGet]");
+    L.push("    [EnableQuery]");
+    L.push(`    public async Task<IQueryable<${model}>> Get()`);
+    L.push("    {");
+    L.push(`        return _context.Set<${model}>().AsNoTracking();`);
+    L.push("    }");
+    L.push("");
+    L.push("    // GET: api/" + apiBase + "/{id}");
+    L.push('    [HttpGet("{id}")]');
+    L.push("    [EnableQuery]");
+    L.push(`    public async Task<IActionResult> Get(${key.type} ${key.param})`);
+    L.push("    {");
+    L.push(`        var item = await _context.Set<${model}>().FindAsync(new object[] { ${key.param} });`);
+    L.push("        if (item == null)");
+    L.push("        {");
+    L.push(`            return NotFound(new { message = ${msgDetail} });`);
+    L.push("        }");
+    L.push("        return Ok(item);");
+    L.push("    }");
+    L.push("");
+    L.push(`    // POST: api/${apiBase}`);
+    L.push("    [HttpPost]");
+    L.push(`    public async Task<IActionResult> Post(${model} product)`);
+    L.push("    {");
+    L.push(`        _context.Set<${model}>().Add(product);`);
+    L.push("        await _context.SaveChangesAsync();");
+    L.push('        return Created($"/api/' + apiBase + '/{product.' + key.prop + '}", product);');
+    L.push("    }");
+    L.push("");
+    L.push("    // PUT: api/" + apiBase + "/{id}");
+    L.push('    [HttpPut("{id}")]');
+    L.push(`    public async Task<IActionResult> Put(${key.type} ${key.param}, ${model} product)`);
+    L.push("    {");
+    L.push(`        var entity = await _context.Set<${model}>().FindAsync(new object[] { ${key.param} });`);
+    L.push("        if (entity == null)");
+    L.push("        {");
+    L.push(`            return NotFound(new { message = ${msgUpdateNotFound} });`);
+    L.push("        }");
+    L.push("        _context.Entry(entity).CurrentValues.SetValues(product);");
+    L.push("        await _context.SaveChangesAsync();");
+    L.push("        return NoContent();");
+    L.push("    }");
+    L.push("");
+    L.push("    // DELETE: api/" + apiBase + "/{id}");
+    L.push('    [HttpDelete("{id}")]');
+    L.push(`    public async Task<IActionResult> Delete(${key.type} ${key.param})`);
+    L.push("    {");
+    L.push(`        var entity = await _context.Set<${model}>().FindAsync(new object[] { ${key.param} });`);
+    L.push("        if (entity == null)");
+    L.push("        {");
+    L.push(`            return NotFound(new { message = ${msgUpdateNotFound} });`);
+    L.push("        }");
+    L.push(`        _context.Set<${model}>().Remove(entity);`);
+    L.push("        await _context.SaveChangesAsync();");
+    L.push("        return NoContent();");
+    L.push("    }");
+    L.push("}");
+
+    state.odataCode = L.join("\n");
+    codeEl.textContent = state.odataCode;
+    $("#odataMeta").textContent = `${table.name} · OData CRUD`;
+
+    // Snippet cài đặt OData cho Program.cs của API
+    const P = [];
+    P.push("using Microsoft.AspNetCore.OData;");
+    P.push("");
+    P.push("// [SỬA KHI ĐỔI ĐỔI] OData: cho phép query $filter / $orderby / $top / $skip / $count / $select / $expand");
+    P.push("builder.Services.AddControllers().AddOData(options => options.Select().Filter().OrderBy().Count().Expand());");
+    $("#odataProgramCode").textContent = P.join("\n");
+  }
+
+  // =====================================================================
+  // SINH DBCONTEXT
+  // =====================================================================
+  // Tên DbSet = số nhiều Pascal của tên bảng (Product -> Products)
+  function ctxDbSetName(table) {
+    return pluralize(pascal(table.name));
+  }
+
+  // Code DbContext sinh tự động: constructor + DbSet + OnModelCreating
+  function buildDbContextCode(tables, contextName, ns) {
+    const ctx = (contextName || "").trim() || "Prn232Context";
+    const nsClean = (ns || "").trim().replace(/[;\s]+$/, "") || "Prn232.ProductApi.Models";
+    const names = tables.map((t) => t.name);
+
+    const L = [];
+    L.push(`// [SỬA KHI ĐỔI ĐỀ] DbContext sinh tự động cho bảng: ${names.join(", ")}.`);
+    L.push("");
+    L.push("using System;");
+    L.push("using System.Collections.Generic;");
+    L.push("using Microsoft.EntityFrameworkCore;");
+    L.push("");
+    L.push(`namespace ${nsClean};`);
+    L.push("");
+    L.push(`public partial class ${ctx} : DbContext`);
+    L.push("{");
+    L.push(`    public ${ctx}(DbContextOptions<${ctx}> options)`);
+    L.push("        : base(options)");
+    L.push("    {");
+    L.push("    }");
+    L.push("");
+    tables.forEach((t, i) => {
+      L.push(`    public virtual DbSet<${pascal(t.name)}> ${ctxDbSetName(t)} { get; set; }`);
+      if (i < tables.length - 1) L.push("");
+    });
+    L.push("");
+    L.push("    protected override void OnModelCreating(ModelBuilder modelBuilder)");
+    L.push("    {");
+    tables.forEach((t, i) => {
+      if (i > 0) L.push("");
+      L.push(`        modelBuilder.Entity<${pascal(t.name)}>(entity =>`);
+      L.push("        {");
+      const pkCols = t.columns.filter((c) => c.pk);
+      const keyCols = pkCols.length ? pkCols : t.columns.slice(0, 1);
+      L.push(`            entity.HasKey(${keyCols.map((c) => `e => e.${pascal(c.name)}`).join(", ")});`);
+      L.push("");
+      L.push(`            entity.ToTable("${t.name}");`);
+      const pl = [];
+      t.columns.forEach((c) => {
+        if (c.pk || c.computed) return;
+        const m = /^([A-Za-z]+)(?:\(([^)]*)\))?$/.exec(c.type);
+        const baseT = (m ? m[1] : c.type).toUpperCase();
+        const len = m && m[2] ? parseInt(m[2], 10) : null;
+        if (/^(CHAR|VARCHAR|NCHAR|NVARCHAR|TEXT|NTEXT|SYSNAME|XML)$/.test(baseT) && len) {
+          pl.push(`            entity.Property(e => e.${pascal(c.name)}).HasMaxLength(${len});`);
+        }
+        if (c.defaultValue) {
+          const d = String(c.defaultValue).trim();
+          const prop = `entity.Property(e => e.${pascal(c.name)})`;
+          if (/^-?\d+(\.\d+)?$/.test(d)) {
+            pl.push(`            ${prop}.HasDefaultValue(${d});`);
+          } else if (/^'.*'$/.test(d)) {
+            const lit = d.replace(/^'/, "").replace(/'$/, "").replace(/''/g, "'");
+            pl.push(`            ${prop}.HasDefaultValue("${lit}");`);
+          } else {
+            pl.push(`            ${prop}.HasDefaultValueSql("${d}");`);
+          }
+        }
+      });
+      if (pl.length) {
+        L.push("");
+        pl.forEach((l) => L.push(l));
+      }
+      const uniqCols = [];
+      (t.uniques || []).forEach((u) => {
+        if (u && u.length === 1 && !uniqCols.includes(u[0])) uniqCols.push(u[0]);
+      });
+      t.columns.forEach((c) => {
+        if (c.unique && !c.pk && !uniqCols.includes(c.name)) uniqCols.push(c.name);
+      });
+      if (uniqCols.length) {
+        L.push("");
+        L.push(`            entity.HasIndex(e => e.${pascal(uniqCols[0])}).IsUnique();`);
+      }
+      L.push("        }");
+    });
+    L.push("");
+    L.push("        OnModelCreatingPartial(modelBuilder);");
+    L.push("    }");
+    L.push("");
+    L.push("    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);");
+    L.push("}");
+    return L.join("\n");
+  }
+
+  // Bảng để chọn: phân tích được + bảng vừa dán (genTable)
+  function ctxTablePool() {
+    const list = state.tables.slice();
+    if (state.genTable) {
+      const fresh = state.tables.find((t) => t.name === state.genTable.name);
+      if (fresh) state.genTable = fresh;
+      else if (!list.some((t) => t.name === state.genTable.name)) list.unshift(state.genTable);
+    }
+    return list;
+  }
+
+  function refreshCtxOptions() {
+    const box = $("#ctxChecks");
+    if (!box) return;
+    const list = ctxTablePool();
+    box.innerHTML = list.length
+      ? list
+          .map(
+            (t) =>
+              `<label class="check-row"><input type="checkbox" class="ctx-check" value="${esc(t.name)}" /><span><code>${esc(t.name)}</code> · ${t.columns.length} field</span></label>`
+          )
+          .join("")
+      : `<span class="muted">Chưa có bảng — vào tab “Cấu trúc bảng” để phân tích SQL trước.</span>`;
+  }
+
+  function setCtxCheck(name, on) {
+    document.querySelectorAll("#ctxChecks .ctx-check").forEach((cb) => {
+      if (cb.value === name) cb.checked = on;
+    });
+  }
+
+  function renderCtx() {
+    const codeEl = $("#ctxCode");
+    if (!codeEl) return;
+    const pool = ctxTablePool();
+    const tables = [];
+    document.querySelectorAll("#ctxChecks .ctx-check").forEach((cb) => {
+      if (!cb.checked) return;
+      const t = pool.find((x) => x.name === cb.value);
+      if (t) tables.push(t);
+    });
+
+    const ctxName = ($("#ctxContext").value.trim() || "Prn232Context").replace(/\.cs$/i, "");
+    const { conn } = connInfo();
+    const parts = [
+      `dotnet ef dbcontext scaffold "${conn}"`,
+      "Microsoft.EntityFrameworkCore.SqlServer",
+      "-o Models",
+      "-f",
+      `-c ${ctxName}`,
+      "--no-onconfiguring"
+    ];
+    if (tables.length) parts.push(tables.map((t) => `-t ${t.name}`).join(" "));
+    $("#ctxScaffoldCmd").textContent = parts.join(" ");
+
+    if (!tables.length) {
+      codeEl.textContent = "// Chọn bảng để sinh DbContext.";
+      $("#ctxMeta").textContent = "Chọn bảng để sinh code";
+      $("#ctxSourceMeta").textContent = "Chưa có bảng";
+      return;
+    }
+
+    const code = buildDbContextCode(tables, ctxName, $("#ctxNamespace").value);
+    state.ctxCode = code;
+    codeEl.textContent = code;
+
+    const names = tables.map((t) => t.name).join(", ");
+    $("#ctxMeta").textContent = `${ctxName} · ${names}`;
+    $("#ctxSourceMeta").textContent = `${names} · ${tables.length} bảng`;
+  }
+
   // =====================================================================
   // KẾT QUẢ MẪU CỦA ENDPOINT
   // =====================================================================
+  // Sinh Razor Page CRUD cho 1 bảng: backend IndexModel (OnGet -> ApiClient) + view Index.cshtml
+  function buildRazorCode(table) {
+    const plural = pluralize(pascal(table.name));
+    const model = pascal(table.name);
+    const dto = `${model}Dto`;
+    const apiMethod = `Get${plural}Async`;
+    const pageNs = `Prn232.Fe.Pages.${plural}`;
+
+    const L = [];
+    L.push("using Microsoft.AspNetCore.Mvc;");
+    L.push("using Microsoft.AspNetCore.Mvc.RazorPages;");
+    L.push("using Prn232.Fe.Models;");
+    L.push("using Prn232.Fe.Services;");
+    L.push("");
+    L.push(`namespace ${pageNs};`);
+    L.push("");
+    L.push("public class IndexModel : PageModel");
+    L.push("{");
+    L.push("    // Số dòng mỗi trang — sửa 1 chỗ này là đổi phân trang");
+    L.push("    private const int PageSize = 5;");
+    L.push("");
+    L.push("    private readonly ApiClient _api;");
+    L.push("");
+    L.push("    public IndexModel(ApiClient api)");
+    L.push("    {");
+    L.push("        _api = api;");
+    L.push("    }");
+    L.push("");
+    L.push(`    public List<${dto}> Items { get; private set; } = new();`);
+    L.push("    public int PageNumber { get; private set; } = 1;");
+    L.push("    public int TotalPages { get; private set; } = 1;");
+    L.push("    public int Total { get; private set; }");
+    L.push("    public string? Search { get; private set; }");
+    L.push("    public string? ErrorMessage { get; private set; }");
+    L.push("");
+    L.push("    [TempData]");
+    L.push("    public string? Message { get; set; }");
+    L.push("");
+    L.push("    public async Task<IActionResult> OnGetAsync(int page = 1, string? search = null)");
+    L.push("    {");
+    L.push("        if (string.IsNullOrEmpty(HttpContext.Session.GetString(\"accessToken\")))");
+    L.push("        {");
+    L.push("            return RedirectToPage(\"/Login\");");
+    L.push("        }");
+    L.push("");
+    L.push("        try");
+    L.push("        {");
+    L.push(`            var result = await _api.${apiMethod}(page, PageSize, search);`);
+    L.push("            if (result == null)");
+    L.push("            {");
+    L.push("                ErrorMessage = _api.ErrorMessage;");
+    L.push("                return Page();");
+    L.push("            }");
+    L.push("");
+    L.push("            Items = result.Items;");
+    L.push("            PageNumber = result.Page;");
+    L.push("            TotalPages = Math.Max(1, result.TotalPages);");
+    L.push("            Total = result.Total;");
+    L.push("            Search = search;");
+    L.push("        }");
+    L.push("        catch (UnauthorizedAccessException)");
+    L.push("        {");
+    L.push("            HttpContext.Session.Clear();");
+    L.push("            return RedirectToPage(\"/Login\");");
+    L.push("        }");
+    L.push("");
+    L.push("        return Page();");
+    L.push("    }");
+    L.push("}");
+    const cs = L.join("\n");
+
+    const fields = table.columns.filter((c) => !c.computed);
+    const F = [];
+    fields.forEach((c) => F.push(`                <th>${c.name}</th>`));
+    const C = [];
+    fields.forEach((c) => C.push(`                    <td>@item.${pascal(c.name)}</td>`));
+
+    const H = [];
+    H.push("@page");
+    H.push(`@model ${pageNs}.IndexModel`);
+    H.push("@{");
+    H.push(`    ViewData["Title"] = "${table.name}";`);
+    H.push("}");
+    H.push("");
+    H.push('<div class="d-flex justify-content-between align-items-center mb-3">');
+    H.push(`    <h2>Danh sách ${table.name}</h2>`);
+    H.push("</div>");
+    H.push("");
+    H.push("@if (!string.IsNullOrEmpty(Model.Message))");
+    H.push("{");
+    H.push("    <div class=\"alert alert-success\">@Model.Message</div>");
+    H.push("}");
+    H.push("");
+    H.push("@if (!string.IsNullOrEmpty(Model.ErrorMessage))");
+    H.push("{");
+    H.push("    <div class=\"alert alert-danger\">@Model.ErrorMessage</div>");
+    H.push("}");
+    H.push("");
+    H.push("@if (Model.Total == 0)");
+    H.push("{");
+    H.push("    <div class=\"alert alert-info\">Không có dữ liệu</div>");
+    H.push("}");
+    H.push("");
+    H.push("@if (Model.Total > 0)");
+    H.push("{");
+    H.push("    <table class=\"table table-bordered table-striped\">");
+    H.push("        <thead>");
+    H.push("            <tr>");
+    H.push(F.join("\n"));
+    H.push("            </tr>");
+    H.push("        </thead>");
+    H.push("        <tbody>");
+    H.push("            @foreach (var item in Model.Items)");
+    H.push("            {");
+    H.push("                <tr>");
+    H.push(C.join("\n"));
+    H.push("                </tr>");
+    H.push("            }");
+    H.push("        </tbody>");
+    H.push("    </table>");
+    H.push("}");
+    const cshtml = H.join("\n");
+
+    return { cshtml, cs };
+  }
+
+  function refreshRazorOptions() {
+    const sel = $("#razorTable");
+    if (!sel) return;
+    const list = ctxTablePool();
+    sel.innerHTML = list.length
+      ? list.map((t) => `<option value="${esc(t.name)}">${esc(t.name)} · ${t.columns.length} field</option>`).join("")
+      : `<option value="">— chưa có bảng —</option>`;
+    if (state.genTable) sel.value = state.genTable.name;
+    else if (list.length) sel.value = list[0].name;
+  }
+
+  function setRazorTable(table) {
+    if (table) {
+      state.genTable = table;
+      const sel = $("#razorTable");
+      if (sel) sel.value = table.name;
+    }
+    renderRazor();
+  }
+
+  function renderRazor() {
+    const codeEl = $("#razorCode");
+    const csEl = $("#razorCs");
+    if (!codeEl) return;
+    const table = state.genTable;
+    if (!table) {
+      codeEl.textContent = "// Chọn bảng để sinh Razor Page CRUD.";
+      if (csEl) csEl.textContent = "// Chọn bảng để sinh Razor Page CRUD.";
+      $("#razorMeta").textContent = "Chọn bảng để sinh code";
+      $("#razorSourceMeta").textContent = "Chọn bảng để sinh Razor Page";
+      return;
+    }
+    const { cshtml, cs } = buildRazorCode(table);
+    state.razorCode = cshtml;
+    state.razorCs = cs;
+    codeEl.textContent = cshtml;
+    if (csEl) csEl.textContent = cs;
+    const plural = pluralize(pascal(table.name));
+    $("#razorMeta").textContent = `${plural} · Index`;
+    $("#razorSourceMeta").textContent = `${table.name} · ${table.columns.length} field`;
+  }
+
+  // Sinh trang Razor Login: backend OnPostAsync (ApiClient.LoginAsync) + view Login.cshtml
+  function buildLoginCode() {
+    const L = [];
+    L.push("using System.ComponentModel.DataAnnotations;");
+    L.push("using Microsoft.AspNetCore.Mvc;");
+    L.push("using Microsoft.AspNetCore.Mvc.RazorPages;");
+    L.push("using Prn232.Fe.Services;");
+    L.push("");
+    L.push("namespace Prn232.Fe.Pages;");
+    L.push("");
+    L.push("public class LoginModel : PageModel");
+    L.push("{");
+    L.push("    private readonly ApiClient _api;");
+    L.push("");
+    L.push("    public LoginModel(ApiClient api)");
+    L.push("    {");
+    L.push("        _api = api;");
+    L.push("    }");
+    L.push("");
+    L.push("    [BindProperty]");
+    L.push("    public LoginInput Input { get; set; } = new();");
+    L.push("");
+    L.push("    public string? ErrorMessage { get; set; }");
+    L.push("");
+    L.push("    public IActionResult OnGet()");
+    L.push("    {");
+    L.push("        if (!string.IsNullOrEmpty(HttpContext.Session.GetString(\"accessToken\")))");
+    L.push("        {");
+    L.push("            return RedirectToPage(\"/Products/Index\");");
+    L.push("        }");
+    L.push("");
+    L.push("        return Page();");
+    L.push("    }");
+    L.push("");
+    L.push("    public async Task<IActionResult> OnPostAsync()");
+    L.push("    {");
+    L.push("        if (!ModelState.IsValid)");
+    L.push("        {");
+    L.push("            return Page();");
+    L.push("        }");
+    L.push("");
+    L.push("        var result = await _api.LoginAsync(Input.Username, Input.Password);");
+    L.push("        if (result == null)");
+    L.push("        {");
+    L.push("            ErrorMessage = _api.ErrorMessage ?? \"Đăng nhập thất bại\";");
+    L.push("            return Page();");
+    L.push("        }");
+    L.push("");
+    L.push("        HttpContext.Session.SetString(\"accessToken\", result.AccessToken);");
+    L.push("        HttpContext.Session.SetString(\"username\", result.Username);");
+    L.push("        HttpContext.Session.SetString(\"role\", result.Role);");
+    L.push("");
+    L.push("        return RedirectToPage(\"/Products/Index\");");
+    L.push("    }");
+    L.push("");
+    L.push("    public class LoginInput");
+    L.push("    {");
+    L.push("        [Required(ErrorMessage = \"Nhập username\")]");
+    L.push("        public string Username { get; set; } = \"\";");
+    L.push("");
+    L.push("        [Required(ErrorMessage = \"Nhập password\")]");
+    L.push("        public string Password { get; set; } = \"\";");
+    L.push("    }");
+    L.push("}");
+    const cs = L.join("\n");
+
+    const H = [];
+    H.push("@page");
+    H.push("@model LoginModel");
+    H.push("@{");
+    H.push("    ViewData[\"Title\"] = \"Login\";");
+    H.push("}");
+    H.push("");
+    H.push("<h2>Đăng nhập</h2>");
+    H.push("");
+    H.push("<div class=\"row\">");
+    H.push("    <div class=\"col-md-4\">");
+    H.push("        <form method=\"post\">");
+    H.push("            <div asp-validation-summary=\"ModelOnly\" class=\"text-danger\"></div>");
+    H.push("");
+    H.push("            @if (!string.IsNullOrEmpty(Model.ErrorMessage))");
+    H.push("            {");
+    H.push("                <div class=\"alert alert-danger\">@Model.ErrorMessage</div>");
+    H.push("            }");
+    H.push("");
+    H.push("            <div class=\"mb-3\">");
+    H.push("                <label asp-for=\"Input.Username\" class=\"form-label\">Username</label>");
+    H.push("                <input asp-for=\"Input.Username\" class=\"form-control\" autocomplete=\"username\" />");
+    H.push("                <span asp-validation-for=\"Input.Username\" class=\"text-danger\"></span>");
+    H.push("            </div>");
+    H.push("");
+    H.push("            <div class=\"mb-3\">");
+    H.push("                <label asp-for=\"Input.Password\" class=\"form-label\">Password</label>");
+    H.push("                <input asp-for=\"Input.Password\" class=\"form-control\" autocomplete=\"current-password\" />");
+    H.push("                <span asp-validation-for=\"Input.Password\" class=\"text-danger\"></span>");
+    H.push("            </div>");
+    H.push("");
+    H.push("            <button type=\"submit\" class=\"btn btn-primary\">Login</button>");
+    H.push("        </form>");
+    H.push("");
+    H.push("        <p class=\"text-muted mt-3\">Tài khoản mẫu: <code>admin / 123456</code></p>");
+    H.push("    </div>");
+    H.push("</div>");
+    const cshtml = H.join("\n");
+
+    return { cshtml, cs };
+  }
+
+  // Sinh backend BE login (AuthApi) — nằm trong project Prn232.AuthApi
+  function buildLoginApiCode() {
+    const L = [];
+    L.push("using Microsoft.AspNetCore.Authorization;");
+    L.push("using Microsoft.AspNetCore.Mvc;");
+    L.push("using Microsoft.EntityFrameworkCore;");
+    L.push("using Prn232.AuthApi.Models;");
+    L.push("using Prn232.AuthApi.Services;");
+    L.push("");
+    L.push("namespace Prn232.AuthApi.Controllers;");
+    L.push("");
+    L.push("[ApiController]");
+    L.push("[Route(\"api/auth\")]");
+    L.push("public class AuthController : ControllerBase");
+    L.push("{");
+    L.push("    private readonly Prn232Context _context;");
+    L.push("    private readonly TokenService _tokenService;");
+    L.push("");
+    L.push("    public AuthController(Prn232Context context, TokenService tokenService)");
+    L.push("    {");
+    L.push("        _context = context;");
+    L.push("        _tokenService = tokenService;");
+    L.push("    }");
+    L.push("");
+    L.push("    // POST /api/auth/login");
+    L.push("    // [SỬA KHI ĐỔI ĐỀ] Đổi bảng Account / field username-password theo model của đề.");
+    L.push("    [HttpPost(\"login\")]");
+    L.push("    public async Task<IActionResult> Login([FromBody] LoginRequest request)");
+    L.push("    {");
+    L.push("        // Password đang so sánh plaintext cho nhanh thi (xem ghi chú trong init.sql).");
+    L.push("        var account = await _context.Accounts");
+    L.push("            .FirstOrDefaultAsync(a => a.Username == request.Username && a.Password == request.Password);");
+    L.push("");
+    L.push("        if (account == null)");
+    L.push("        {");
+    L.push("            return Unauthorized(new { message = \"Sai username hoặc password\" });");
+    L.push("        }");
+    L.push("");
+    L.push("        var token = _tokenService.CreateToken(account);");
+    L.push("");
+    L.push("        return Ok(new");
+    L.push("        {");
+    L.push("            accessToken = token,");
+    L.push("            username = account.Username,");
+    L.push("            role = account.Role");
+    L.push("        });");
+    L.push("    }");
+    L.push("");
+    L.push("    // GET /api/auth/me");
+    L.push("    [Authorize]");
+    L.push("    [HttpGet(\"me\")]");
+    L.push("    public IActionResult Me()");
+    L.push("    {");
+    L.push("        return Ok(new");
+    L.push("        {");
+    L.push("            username = User.FindFirst(\"username\")?.Value ?? User.Identity?.Name,");
+    L.push("            role = User.FindFirst(\"role\")?.Value");
+    L.push("        });");
+    L.push("    }");
+    L.push("}");
+    L.push("");
+    L.push("public class LoginRequest");
+    L.push("{");
+    L.push("    public string Username { get; set; } = \"\";");
+    L.push("    public string Password { get; set; } = \"\";");
+    L.push("}");
+    return { cs: L.join("\n") };
+  }
+
+  function renderLogin() {
+    const codeEl = $("#loginCode");
+    const csEl = $("#loginCs");
+    if (!codeEl) return;
+    const { cshtml, cs } = buildLoginCode();
+    const { cs: authApi } = buildLoginApiCode();
+    state.loginCode = cshtml;
+    state.loginCs = cs;
+    state.loginApiCode = authApi;
+    codeEl.textContent = cshtml;
+    if (csEl) csEl.textContent = cs;
+    const apiEl = $("#loginApiCode");
+    if (apiEl) apiEl.textContent = authApi;
+    $("#loginMeta").textContent = "Login · AuthApi";
+  }
+
+  // Snippet LINQ de tao query list: filter / sort / search + Include FK.
+  // Day la minh hoa cho user doc, user tu thay doi query.
+  function buildLinqCode() {
+    const L = [];
+    L.push("// GET: api/Products");
+    L.push("var query = _context.Set<Product>().AsNoTracking();");
+    L.push("");
+    L.push("// [SỬA KHI ĐỔI ĐỔI] Thêm filter / search / sort theo ý cần:");
+    L.push("// query = query.Where(e => e.Price > 100);");
+    L.push("// query = query.Where(e => e.Name.Contains(keyword));");
+    L.push("query = query.OrderBy(e => e.Name).ThenBy(e => e.Price);");
+    L.push("");
+    L.push("var items = await query.ToListAsync();");
+    L.push("");
+    L.push("// Nối bảng theo khóa ngoại (Include) — ví dụ: Product -> Category:");
+    L.push("var itemsWithFk = await _context.Set<Product>()");
+    L.push("    .Include(e => e.Category)");
+    L.push("    .ToListAsync();");
+    L.push("");
+    L.push("return Ok(items);");
+    return L.join("\n");
+  }
+
+  function renderLinq() {
+    const codeEl = $("#linqCode");
+    if (!codeEl) return;
+    state.linqCode = buildLinqCode();
+    codeEl.textContent = state.linqCode;
+    $("#linqMeta").textContent = "Cách dùng LINQ · tham khảo";
+  }
+
   function sqlBaseType(sqlType) {
     return String(sqlType || "").toUpperCase().replace(/\(.*$/, "").trim();
   }
@@ -1175,13 +1941,6 @@
     return controller.replace(/Controller$/i, "");
   }
 
-  const SAMPLE_VALIDATION = {
-    type: "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-    title: "One or more validation errors occurred.",
-    status: 400,
-    errors: { price: ['The JSON value could not be converted to System.Decimal.'] }
-  };
-
   function resBlock(tone, status, title, body, headers) {
     return `<div class="res-block">
       <div class="res-head">
@@ -1244,11 +2003,26 @@
     if (!Number.isFinite(pageSize) || pageSize < 1) pageSize = 10;
     if (pageSize > 500) pageSize = 500;
     const searchCols = acts.list ? genSearchColumns() : [];
+    const cList200 = state.customMessages.filter((m) => m.endpoint === "list" && String(m.status) === "200").pop() || null;
 
-    const tpl404 = $("#msgNotFound").value;
-    const tplMismatch = $("#msgMismatch").value;
-    const tpl401 = $("#msgUnauthorized").value;
-    const notFoundBody = json({ message: sampleMessage(tpl404, model, table.name, table, keys) });
+    const cDetail = customMsg("detail", 404);
+    const tpl404 = cDetail && cDetail.text.trim() ? cDetail.text : state.messages.notFound;
+    const cCreate = customMsg("create", 400);
+    const tplCreateValidation = cCreate && cCreate.text.trim() ? cCreate.text : state.messages.validation;
+    const cUpdate404 = customMsg("update", 404);
+    const tplUpdateNotFound = cUpdate404 && cUpdate404.text.trim() ? cUpdate404.text : state.messages.notFound;
+    const cUpdate400 = customMsg("update", 400);
+    const tplUpdateMismatch = cUpdate400 && cUpdate400.text.trim() ? cUpdate400.text : state.messages.mismatch;
+    const tplUpdateValidation = cUpdate400 && cUpdate400.text.trim() ? cUpdate400.text : state.messages.validation;
+    const cDelete = customMsg("delete", 404);
+    const tplDeleteNotFound = cDelete && cDelete.text.trim() ? cDelete.text : state.messages.notFound;
+    const tpl401 = (customMsg("auth", 401) && customMsg("auth", 401).text.trim() ? customMsg("auth", 401).text : state.messages.unauthorized);
+    const notFoundDetailBody = json({ message: sampleMessage(tpl404, model, table.name, table, keys) });
+    const notFoundDeleteBody = json({ message: sampleMessage(tplDeleteNotFound, model, table.name, table, keys) });
+    const validationCreateBody = json({ message: sampleMessage(tplCreateValidation, model, table.name, table, keys) });
+    const validationUpdateBody = json({ message: sampleMessage(tplUpdateValidation, model, table.name, table, keys) });
+    const mismatchUpdateBody = json({ message: sampleMessage(tplUpdateMismatch, model, table.name, table, keys) });
+    const customSampleBody = (e) => json({ message: sampleMessage(e.text, model, table.name, table, keys) });
 
     const blocks = [];
     const authBlock = () =>
@@ -1271,43 +2045,65 @@
       const body = pagingOn
         ? { total: 1, page: 1, pageSize, items: [obj] }
         : [obj];
-      blocks.push(resBlock("s2xx", "200 OK", req, json(body)));
+      blocks.push(
+        cList200
+          ? resBlock("s2xx", String(cList200.status), req, customSampleBody(cList200))
+          : resBlock("s2xx", "200 OK", req, json(body))
+      );
       if (authorize) authBlock();
     }
 
     if (kind === "detail") {
       const req = `GET /api/${api}/${keyPath}`;
-      blocks.push(resBlock("s2xx", "200 OK", req, json(obj)));
+      const cDetail200S = state.customMessages.filter((m) => m.endpoint === "detail" && String(m.status) === "200").pop() || null;
       blocks.push(
-        resBlock("s4xx", "404 Not Found", req, notFoundBody)
+        cDetail200S
+          ? resBlock("s2xx", String(cDetail200S.status), req, customSampleBody(cDetail200S))
+          : resBlock("s2xx", "200 OK", req, json(obj))
+      );
+      blocks.push(
+        resBlock("s4xx", "404 Not Found", req, notFoundDetailBody)
       );
       if (authorize) authBlock();
     }
-
     if (kind === "create") {
       const req = `POST /api/${api}`;
+      const cSuccCreate = state.customMessages.filter((m) => m.endpoint === "create" && m.text && m.text.trim()).pop() || null;
+      const createSuccess = cSuccCreate && cSuccCreate.text && cSuccCreate.text.trim();
       blocks.push(
-        resBlock("s2xx", "201 Created", req, json(obj), `Location: http://localhost:5002/api/${api}/${keyPath}`)
+        createSuccess
+          ? resBlock("s2xx", String(cSuccCreate.status), req, customSampleBody(cSuccCreate))
+          : resBlock("s2xx", "201 Created", req, json(obj), `Location: http://localhost:5002/api/${api}/${keyPath}`)
       );
-      blocks.push(resBlock("s4xx", "400 Bad Request", req + " (body sai kiểu / thiếu field)", json(SAMPLE_VALIDATION)));
+      blocks.push(resBlock("s4xx", "400 Bad Request", req + " (body sai kiểu / thiếu field)", validationCreateBody));
       if (authorize) authBlock();
     }
 
     if (kind === "update") {
       const req = `PUT /api/${api}/${keyPath}`;
-      blocks.push(resBlock("s2xx", "204 No Content", req, "(không có body)"));
+      const cSuccUpdate = state.customMessages.filter((m) => m.endpoint === "update" && m.text && m.text.trim()).pop() || null;
+      const updateSuccess = cSuccUpdate && cSuccUpdate.text && cSuccUpdate.text.trim();
       blocks.push(
-        resBlock("s4xx", "400 Bad Request", req + " (id trên URL ≠ id trong body)", json({ message: sampleMessage(tplMismatch, model, table.name, table, keys) }))
+        updateSuccess
+          ? resBlock("s2xx", String(cSuccUpdate.status), req, customSampleBody(cSuccUpdate))
+          : resBlock("s2xx", "204 No Content", req, "(không có body)")
       );
-      blocks.push(resBlock("s4xx", "400 Bad Request", req + " (body sai kiểu)", json(SAMPLE_VALIDATION)));
+      blocks.push(resBlock("s4xx", "400 Bad Request", req + " (id trên URL ≠ id trong body)", mismatchUpdateBody));
+      blocks.push(resBlock("s4xx", "400 Bad Request", req + " (body sai kiểu)", validationUpdateBody));
       if (authorize) authBlock();
     }
 
     if (kind === "delete") {
       const req = `DELETE /api/${api}/${keyPath}`;
-      blocks.push(resBlock("s2xx", "204 No Content", req, "(không có body)"));
+      const cSuccDelete = state.customMessages.filter((m) => m.endpoint === "delete" && m.text && m.text.trim()).pop() || null;
+      const deleteSuccess = cSuccDelete && cSuccDelete.text && cSuccDelete.text.trim();
       blocks.push(
-        resBlock("s4xx", "404 Not Found", req, notFoundBody)
+        deleteSuccess
+          ? resBlock("s2xx", String(cSuccDelete.status), req, customSampleBody(cSuccDelete))
+          : resBlock("s2xx", "204 No Content", req, "(không có body)")
+      );
+      blocks.push(
+        resBlock("s4xx", "404 Not Found", req, notFoundDeleteBody)
       );
       if (authorize) authBlock();
     }
@@ -1329,8 +2125,8 @@
   // =====================================================================
   // HƯỚNG DẪN NẠP DB & DB-FIRST
   // =====================================================================
-  const views = { setup: $("#view-setup"), db: $("#view-schema"), crud: $("#view-crud") };
-  const viewTitles = { setup: "Nạp DB & DB-first", db: "Cấu trúc bảng", crud: "Sinh Controller CRUD" };
+  const views = { setup: $("#view-setup"), db: $("#view-schema"), context: $("#view-context"), razor: $("#view-razor"), crud: $("#view-crud"), login: $("#view-login"), linq: $("#view-linq"), odata: $("#view-odata") };
+  const viewTitles = { setup: "Nạp DB & DB-first", db: "Cấu trúc bảng", context: "Sinh DbContext", razor: "Sinh Razor CRUD", crud: "Sinh Controller CRUD", login: "Sinh Login", linq: "Cách dùng LINQ", odata: "Sinh Controller OData CRUD" };
 
   function showView(name) {
     const key = views[name] ? name : "db";
@@ -1347,6 +2143,24 @@
     if (key === "setup") {
       renderConn();
       $("#stats").textContent = "Hướng dẫn: SQL → DB-first → scaffold";
+    } else if (key === "context") {
+      refreshCtxOptions();
+      renderCtx();
+      $("#stats").textContent = "Sinh DbContext: chọn bảng → copy code";
+    } else if (key === "razor") {
+      refreshRazorOptions();
+      renderRazor();
+      $("#stats").textContent = "Sinh Razor CRUD: chọn bảng → copy code";
+    } else if (key === "login") {
+      renderLogin();
+      $("#stats").textContent = "Sinh Login: copy code";
+    } else if (key === "linq") {
+      renderLinq();
+      $("#stats").textContent = "Cách dùng LINQ: snippet tham khảo";
+    } else if (key === "odata") {
+      refreshOdataOptions();
+      renderOdata();
+      $("#stats").textContent = "Sinh Controller OData CRUD: chọn bảng → copy code";
     } else if (key === "crud") {
       refreshGenOptions();
       if (!state.genTable && state.tables.length) setGenTable(state.tables[0]);
@@ -1425,6 +2239,43 @@
         ta.remove();
       }
     });
+  }
+
+  // Vẽ danh sách message tùy chỉnh (thêm qua nút “Thêm message”)
+  function renderCustomMsgs() {
+    const box = $("#customMsgList");
+    if (!box) return;
+    if (!state.customMessages.length) {
+      box.innerHTML = `<p class="out-hint">Chưa có message tùy chỉnh. Dùng nút “Thêm message” để thêm mới.</p>`;
+      return;
+    }
+    box.innerHTML = state.customMessages
+      .map(
+        (m) => `
+        <div class="msg-custom">
+          <select class="input mini" data-cm-id="${m.id}">
+            <option value="" disabled>endpoint</option>
+            <option value="list" ${m.endpoint === "list" ? "selected" : ""}>List</option>
+            <option value="detail" ${m.endpoint === "detail" ? "selected" : ""}>Detail</option>
+            <option value="create" ${m.endpoint === "create" ? "selected" : ""}>Create</option>
+            <option value="update" ${m.endpoint === "update" ? "selected" : ""}>Update</option>
+            <option value="delete" ${m.endpoint === "delete" ? "selected" : ""}>Delete</option>
+            <option value="auth" ${m.endpoint === "auth" ? "selected" : ""}>Auth</option>
+          </select>
+          <select class="input mini" data-cm-status="${m.id}">
+            <option value="200" ${String(m.status) === "200" ? "selected" : ""}>200</option>
+            <option value="201" ${String(m.status) === "201" ? "selected" : ""}>201</option>
+            <option value="204" ${String(m.status) === "204" ? "selected" : ""}>204</option>
+            <option value="400" ${String(m.status) === "400" ? "selected" : ""}>400</option>
+            <option value="401" ${String(m.status) === "401" ? "selected" : ""}>401</option>
+            <option value="403" ${String(m.status) === "403" ? "selected" : ""}>403</option>
+            <option value="404" ${String(m.status) === "404" ? "selected" : ""}>404</option>
+          </select>
+          <input class="input" data-cm-id="${m.id}" data-cm-text value="${esc(m.text)}" placeholder="Nội dung message..." />
+          <button type="button" class="btn ghost sm" data-cm-del="${m.id}">Xoá</button>
+        </div>`
+      )
+      .join("");
   }
 
   // =====================================================================
@@ -1519,7 +2370,7 @@
     const item = e.target.closest(".nav-item");
     if (!item) return;
     const tool = item.getAttribute("data-tool");
-    if (tool === "setup" || tool === "db" || tool === "crud") {
+    if (tool === "setup" || tool === "db" || tool === "crud" || tool === "context" || tool === "razor" || tool === "login" || tool === "linq" || tool === "odata") {
       showView(tool);
       return;
     }
@@ -1574,9 +2425,60 @@
     renderGen();
   });
   $("#genPageSize").addEventListener("input", renderGen);
-  ["msgNotFound", "msgMismatch", "msgUnauthorized", "msgForbidden"].forEach((id) => {
+  const MSG_STATE_KEYS = {
+    msgNotFound: "notFound",
+    msgMismatch: "mismatch",
+    msgValidation: "validation",
+    msgUnauthorized: "unauthorized",
+    msgForbidden: "forbidden"
+  };
+  Object.keys(MSG_STATE_KEYS).forEach((id) => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener("input", renderGen);
+    if (!el) return;
+    el.addEventListener("input", () => {
+      state.messages[MSG_STATE_KEYS[id]] = el.value;
+      renderGen();
+      renderSample();
+    });
+  });
+  // Message tùy chỉnh: thêm mới / sửa / xoá
+  $("#btnAddMsg").addEventListener("click", () => {
+    state.customMessages.push({ id: Date.now(), endpoint: "create", status: "201", text: "" });
+    renderCustomMsgs();
+    renderGen();
+    renderSample();
+  });
+  $("#customMsgList").addEventListener("click", (e) => {
+    const del = e.target.closest("[data-cm-del]");
+    if (!del) return;
+    const id = Number(del.getAttribute("data-cm-del"));
+    state.customMessages = state.customMessages.filter((m) => m.id !== id);
+    renderCustomMsgs();
+    renderGen();
+    renderSample();
+  });
+  $("#customMsgList").addEventListener("change", (e) => {
+    const epEl = e.target.closest("[data-cm-endpoint]");
+    const stEl = e.target.closest("[data-cm-status]");
+    const id = stEl ? Number(stEl.getAttribute("data-cm-status")) : epEl ? Number(epEl.getAttribute("data-cm-id")) : NaN;
+    const m = state.customMessages.find((x) => x.id === id);
+    if (!m) return;
+    if (epEl) m.endpoint = epEl.value;
+    if (stEl) m.status = stEl.value;
+    renderCustomMsgs();
+    renderGen();
+    renderSample();
+  });
+  $("#customMsgList").addEventListener("input", (e) => {
+    const textEl = e.target.closest("[data-cm-text]");
+    if (!textEl) return;
+    const id = Number(textEl.getAttribute("data-cm-id"));
+    const m = state.customMessages.find((x) => x.id === id);
+    if (m) {
+      m.text = textEl.value;
+      renderGen();
+      renderSample();
+    }
   });
   $("#sampleEndpoint").addEventListener("change", renderSample);
   $("#btnSampleResult").addEventListener("click", renderSample);
@@ -1609,6 +2511,99 @@
     if (!state.genCode) return toast("Chưa có code để tải.", "err");
     const name = ($("#genController").value.trim() || "Controller").replace(/\.cs$/i, "") + ".cs";
     download(new Blob([state.genCode], { type: "text/plain;charset=utf-8" }), name);
+  });
+
+  // Sinh DbContext
+  $("#ctxChecks").addEventListener("change", (e) => {
+    if (e.target.classList.contains("ctx-check")) renderCtx();
+  });
+  ["ctxContext", "ctxNamespace"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", renderCtx);
+  });
+  $("#btnCtxUsePaste").addEventListener("click", () => {
+    const raw = $("#ctxPaste").value.trim();
+    if (!raw) return toast("Chưa có nội dung để dùng.", "err");
+
+    let table = null;
+    if (/create\s+table/i.test(raw)) {
+      const parsed = parseSql(raw);
+      table = parsed.tables[0] || null;
+    } else {
+      const name = raw.replace(/[\[\]"]/g, "").split(".").pop().trim();
+      const pool = ctxTablePool();
+      table = pool.find((t) => t.name.toLowerCase() === name.toLowerCase()) || null;
+    }
+
+    if (!table) return toast("Không tìm thấy bảng từ nội dung đã dán.", "err");
+    setCtxCheck(table.name, true);
+    renderCtx();
+    toast(`Đã chọn bảng ${table.name}.`, "ok");
+  });
+  $("#btnDownloadCtx").addEventListener("click", () => {
+    if (!state.ctxCode) return toast("Chọn bảng để sinh DbContext trước.", "err");
+    const name = ($("#ctxContext").value.trim() || "Prn232Context").replace(/\.cs$/i, "") + ".cs";
+    download(new Blob([state.ctxCode], { type: "text/plain;charset=utf-8" }), name);
+  });
+
+  // Sinh Razor CRUD
+  $("#razorTable").addEventListener("change", (e) => {
+    const t = ctxTablePool().find((x) => x.name === e.target.value);
+    setRazorTable(t || null);
+  });
+  $("#btnRazorUsePaste").addEventListener("click", () => {
+    const raw = $("#razorPaste").value.trim();
+    if (!raw) return toast("Chưa có nội dung để dùng.", "err");
+
+    let table = null;
+    if (/create\s+table/i.test(raw)) {
+      const parsed = parseSql(raw);
+      table = parsed.tables[0] || null;
+    } else {
+      const name = raw.replace(/[\[\]"]/g, "").split(".").pop().trim();
+      const pool = ctxTablePool();
+      table = pool.find((t) => t.name.toLowerCase() === name.toLowerCase()) || null;
+    }
+
+    if (!table) return toast("Không tìm thấy bảng từ nội dung đã dán.", "err");
+    setRazorTable(table);
+    toast(`Đã chọn bảng ${table.name}.`, "ok");
+  });
+  $("#btnDownloadRazor").addEventListener("click", () => {
+    if (!state.razorCode) return toast("Chọn bảng để sinh Razor Page trước.", "err");
+    download(new Blob([state.razorCode], { type: "text/plain;charset=utf-8" }), "Index.cshtml");
+  });
+  $("#btnDownloadRazorCs").addEventListener("click", () => {
+    if (!state.razorCs) return toast("Chọn bảng để sinh Razor Page trước.", "err");
+    download(new Blob([state.razorCs], { type: "text/plain;charset=utf-8" }), "Index.cshtml.cs");
+  });
+
+  // Sinh Login
+  $("#btnDownloadLogin").addEventListener("click", () => {
+    if (!state.loginCode) return toast("Sinh Login trước.", "err");
+    download(new Blob([state.loginCode], { type: "text/plain;charset=utf-8" }), "Login.cshtml");
+  });
+  $("#btnDownloadLoginCs").addEventListener("click", () => {
+    if (!state.loginCs) return toast("Sinh Login trước.", "err");
+    download(new Blob([state.loginCs], { type: "text/plain;charset=utf-8" }), "Login.cshtml.cs");
+  });
+  $("#btnDownloadLoginApi").addEventListener("click", () => {
+    if (!state.loginApiCode) return toast("Sinh Login trước.", "err");
+    download(new Blob([state.loginApiCode], { type: "text/plain;charset=utf-8" }), "AuthController.cs");
+  });
+  $("#btnDownloadLinq").addEventListener("click", () => {
+    if (!state.linqCode) return toast("Sinh snippet LINQ trước.", "err");
+    download(new Blob([state.linqCode], { type: "text/plain;charset=utf-8" }), "LinqSnippet.cs");
+  });
+  $("#btnDownloadOdata").addEventListener("click", () => {
+    if (!state.odataCode) return toast("Chọn bảng để sinh controller OData CRUD trước.", "err");
+    const name = ($("#genController").value.trim() || "Controller").replace(/\.cs$/i, "") + ".cs";
+    download(new Blob([state.odataCode], { type: "text/plain;charset=utf-8" }), name);
+  });
+  $("#btnDownloadOdataProgram").addEventListener("click", () => {
+    const code = $("#odataProgramCode").textContent;
+    if (!code || code.indexOf("AddOData") === -1) return toast("Chọn bảng để sinh code OData trước.", "err");
+    download(new Blob([code], { type: "text/plain;charset=utf-8" }), "Program.cs");
   });
 
   // Nút sao chép trong trang hướng dẫn

@@ -56,7 +56,6 @@
           <rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>
         </svg>
         <span class="label">Sinh DbContext</span>
-        <span class="tag soon">Soon</span>
       </button>
 
       <button class="nav-item" data-tool="crud">
@@ -66,12 +65,32 @@
         <span class="label">Sinh Controller CRUD</span>
       </button>
 
+      <button class="nav-item" data-tool="login">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="11" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+        <span class="label">Sinh Login</span>
+      </button>
+
+      <button class="nav-item" data-tool="odata">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+        </svg>
+        <span class="label">Sinh Controller OData CRUD</span>
+      </button>
+
+      <button class="nav-item" data-tool="linq">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+        </svg>
+        <span class="label">Cách dùng LINQ</span>
+      </button>
+
       <button class="nav-item" data-tool="razor">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M7 13h4M7 16.5h7"/>
         </svg>
         <span class="label">Sinh Razor CRUD</span>
-        <span class="tag soon">Soon</span>
       </button>
 
       <button class="nav-item" data-tool="config">
@@ -203,6 +222,222 @@
           <div class="no-result" id="noResult" hidden></div>
         </div>
       </section>
+      </div>
+    </div>
+
+    <!-- ============ SINH DBCONTEXT ============ -->
+    <div class="view" id="view-context" hidden>
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Code generator</span>
+              <h1>Sinh DbContext</h1>
+              <p>
+                Chọn 1+ bảng đã phân tích (hoặc dán <code>CREATE TABLE</code>) → điền tên context/namespace
+                → sinh. Code gồm constructor, <code>DbSet</code> và <code>OnModelCreating</code> — đúng shape sau
+                bước scaffold của <code>dotnet ef dbcontext scaffold</code>.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Chọn bảng</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Tuỳ chỉnh</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Copy code</span>
+            </div>
+          </section>
+
+          <div class="crud-grid">
+            <section class="card">
+              <div class="card-head">
+                <h2>1. Chọn bảng</h2>
+                <span class="muted" id="ctxSourceMeta">Chưa có bảng</span>
+              </div>
+
+              <div class="checks" id="ctxChecks"></div>
+
+              <div class="divider"><span>hoặc dán</span></div>
+
+              <label class="field">
+                <span>Tên bảng hoặc CREATE TABLE</span>
+                <textarea class="input textarea" id="ctxPaste" spellcheck="false" placeholder="Product&#10;hoặc dán nguyên: CREATE TABLE [dbo].[Product] ( ... )"></textarea>
+              </label>
+              <button type="button" class="btn" id="btnCtxUsePaste">Dùng nội dung dán</button>
+
+              <p class="out-hint">
+                Muốn context cho cả DB: vào tab “Cấu trúc bảng”, bấm nút <b>Sinh CRUD</b> trên từng bảng
+                hoặc tích chọn nhiều bảng ở đây rồi sinh một context duy nhất.
+              </p>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <h2>2. Tuỳ chỉnh</h2>
+                <span class="muted">Sửa theo project của bạn</span>
+              </div>
+
+              <div class="opt-grid">
+                <label class="field">
+                  <span>DbContext</span>
+                  <input class="input" id="ctxContext" value="Prn232Context" spellcheck="false" />
+                </label>
+                <label class="field">
+                  <span>Namespace</span>
+                  <input class="input" id="ctxNamespace" value="Prn232.ProductApi.Models" spellcheck="false" />
+                </label>
+              </div>
+
+              <p class="out-hint">
+                Sau khi sinh: xoá method <code>OnConfiguring</code> nếu có trong context, rồi đăng ký
+                <code>AddDbContext</code> trong <code>Program.cs</code> của API.
+              </p>
+            </section>
+          </div>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">3</span>
+              <h2>Code DbContext</h2>
+              <div class="head-actions">
+                <span class="muted" id="ctxMeta">Chọn bảng để sinh code</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadCtx">Tải .cs</button>
+              </div>
+            </div>
+
+            <div class="code-box big">
+              <pre id="ctxCode">// Chọn bảng để sinh DbContext.</pre>
+              <button type="button" class="copy-btn" data-copy="ctxCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Tên context trong <code>-dc</code> của lệnh scaffold (<code>dotnet ef dbcontext scaffold ... -c Prn232Context</code>) phải <b>trùng</b> tên class vừa sinh.</li>
+              <li><code>DbSet</code> tên được sinh tự động là số nhiều Pascal của tên bảng (vd <code>Product</code> → <code>DbSet&lt;Product&gt; Products</code>).</li>
+              <li>Khóa (<code>HasKey</code>) + <code>ToTable</code> + <code>HasMaxLength</code>/<code>HasDefaultValue</code> được sinh từ <code>CREATE TABLE</code> đã phân tích.</li>
+              <li>Chưa sinh block <code>HasOne/WithMany</code> cho FK — EF tự hiểu theo tên cột (<code>CategoryId</code> → <code>Category</code>).</li>
+              <li>Sau khi scaffold: xoá <code>OnConfiguring</code> nếu có, đăng ký <code>AddDbContext</code> trong <code>Program.cs</code>.</li>
+            </ul>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">4</span>
+              <h2>Chạy lệnh scaffold (EF Core CLI)</h2>
+            </div>
+            <p class="step-desc">
+              Code DbContext vừa sinh ở trên là kết quả của lệnh scaffold — thay vì copy tay, bấm sinh xong rồi
+              chạy command dưới đây (tool đã điền context + connection string + các bảng cần scaffold).
+            </p>
+
+            <div class="code-box">
+              <pre id="ctxScaffoldCmd"></pre>
+              <button type="button" class="copy-btn" data-copy="ctxScaffoldCmd">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Command: <code>dotnet ef dbcontext scaffold "&lt;connection&gt;" Microsoft.EntityFrameworkCore.SqlServer -o Models -f -c Prn232Context --no-onconfiguring</code>.</li>
+              <li>Cần cài: <code>dotnet tool install --global dotnet-ef</code>, <code>dotnet add package Microsoft.EntityFrameworkCore.SqlServer</code>, <code>dotnet add package Microsoft.EntityFrameworkCore.Design</code>.</li>
+              <li>Chạy trong thư mục project API (vd <code>src/Prn232.ProductApi</code>); có <code>-t</code> khi đã chọn bảng cần sinh.</li>
+              <li>Sau khi chạy: xoá <code>OnConfiguring</code> nếu có, đăng ký <code>AddDbContext</code> trong <code>Program.cs</code>.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SINH RAZOR CRUD ============ -->
+    <div class="view" id="view-razor" hidden>
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Code generator</span>
+              <h1>Sinh Razor CRUD</h1>
+              <p>
+                Chọn 1 bảng đã phân tích (hoặc dán <code>CREATE TABLE</code>) → sinh
+                <code>Pages/…/Index.cshtml</code> + <code>Index.cshtml.cs</code>.
+                Backend gọi API qua <code>ApiClient</code> (Bearer token từ Session), giao diện phía trên render bảng.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Chọn bảng</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Sinh code</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Copy / tải .cs</span>
+            </div>
+          </section>
+
+          <div class="crud-grid">
+            <section class="card">
+              <div class="card-head">
+                <h2>1. Chọn bảng</h2>
+                <span class="muted" id="razorSourceMeta">Chọn bảng để sinh Razor Page</span>
+              </div>
+
+              <label class="field">
+                <span>Bảng đã phân tích</span>
+                <select class="input" id="razorTable"></select>
+                <small>Import file SQL ở mục “Cấu trúc bảng” để có danh sách.</small>
+              </label>
+
+              <div class="divider"><span>hoặc dán</span></div>
+
+              <label class="field">
+                <span>Tên bảng hoặc CREATE TABLE</span>
+                <textarea class="input textarea" id="razorPaste" spellcheck="false" placeholder="Product&#10;hoặc dán nguyên: CREATE TABLE [dbo].[Product] ( ... )"></textarea>
+              </label>
+              <button type="button" class="btn" id="btnRazorUsePaste">Dùng nội dung dán</button>
+
+              <p class="out-hint">
+                Code sinh ra gồm 2 file: <code>Index.cshtml</code> (giao diện: alert + bảng) và
+                <code>Index.cshtml.cs</code> (backend: <code>OnGet</code> gọi <code>ApiClient</code> → GET <code>/api/Products</code>).
+              </p>
+            </section>
+
+            <section class="card">
+              <div class="card-head">
+                <h2>2. Tuỳ chỉnh</h2>
+                <span class="muted">Sửa theo project của bạn</span>
+              </div>
+              <p class="out-hint">
+                Namespace mặc định: <code>Prn232.Fe.Pages.Products</code> (từ tên bảng). Backend dùng
+                <code>ApiClient.GetProductsAsync(page, PageSize, search)</code>; token lấy từ Session.
+              </p>
+            </section>
+          </div>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">3</span>
+              <h2>Code Razor Page CRUD</h2>
+              <div class="head-actions">
+                <span class="muted" id="razorMeta">Chọn bảng để sinh code</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadRazor">Tải .cshtml</button>
+                <button type="button" class="btn ghost sm" id="btnDownloadRazorCs">Tải .cs</button>
+              </div>
+            </div>
+
+            <div class="code-box big">
+              <pre id="razorCode">// Chọn bảng để sinh Razor Page CRUD.</pre>
+              <button type="button" class="copy-btn" data-copy="razorCode">Sao chép</button>
+            </div>
+
+            <div class="code-box">
+              <pre id="razorCs"></pre>
+              <button type="button" class="copy-btn" data-copy="razorCs">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Backend: <code>OnGetAsync</code> kiểm tra token Session → gọi GET <code>/api/Products?page=&size=&search=</code> qua <code>ApiClient</code> → nạp <code>Items</code> + phân trang.</li>
+              <li>Giao diện: alert (TempData <code>Message</code> + <code>ErrorMessage</code>) + bảng render <code>Model.Items</code>.</li>
+              <li>Thêm Create/Edit/Delete Razor tương tự khi đề yêu cầu.</li>
+              <li>Sau khi sinh: tạo DTO <code>ProductDto</code> trong FE nếu chưa có, rồi chạy FE.</li>
+            </ul>
+          </section>
+        </div>
       </div>
     </div>
 
@@ -344,7 +579,11 @@
                     <input class="input" id="msgNotFound" value="Không tìm thấy {model}." spellcheck="false" />
                   </label>
                   <label class="field">
-                    <span>400 Khoá URL ≠ body</span>
+                    <span>400 Validation (Create / Update)</span>
+                    <input class="input" id="msgValidation" value="Dữ liệu không hợp lệ." spellcheck="false" />
+                  </label>
+                  <label class="field">
+                    <span>400 Khoá URL ≠ body (Update)</span>
                     <input class="input" id="msgMismatch" value="Khóa trên URL không khớp với body." spellcheck="false" />
                   </label>
                   <label class="field">
@@ -356,6 +595,13 @@
                     <input class="input" id="msgForbidden" value="Bạn không có quyền truy cập." spellcheck="false" />
                   </label>
                 </div>
+                <p class="out-hint">
+                  Mỗi endpoint tự lấy message tương ứng: Detail/Update/Delete dùng 404 · Create/Update dùng 400 Validation ·
+                  Update dùng thêm 400 Mismatch · Auth dùng 401/403. Dùng <code>{model}</code>, <code>{table}</code>, <code>{id}</code>.
+                </p>
+                <div class="msg-custom-head"><span class="muted">Message custom (thêm theo endpoint)</span></div>
+                <button type="button" class="btn" id="btnAddMsg">Thêm message</button>
+                <div id="customMsgList"></div>
               </div>
             </section>
           </div>
@@ -456,6 +702,29 @@
               <li>Message lấy từ ô <b>401</b> / <b>403</b> ở panel “Tuỳ chọn”.</li>
               <li>403 chỉ xảy ra khi dùng <code>[Authorize(Roles = "...")]</code>; controller mặc định không phân quyền.</li>
               <li>Ô 404 / 400 nằm trong controller nên sửa trực tiếp ở panel là code sinh ra đổi theo.</li>
+            </ul>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">7</span>
+              <h2>Hướng dẫn trả JSON theo mong muốn</h2>
+            </div>
+            <p class="step-desc">
+              Muốn API trả JSON có thêm field / đổi tên field / chỉnh mã HTTP: dùng custom message ở panel
+              <b>“Message trả về”</b> (chọn endpoint + mã status + message) rồi bấm <b>“Sinh code”</b> / <b>“Sinh kết quả mẫu”</b>.
+              Khi có custom, code trả đúng status vừa chọn và body dạng <code>new { message = "..." }</code>.
+            </p>
+            <div class="code-box">
+              <pre id="genCustomGuide">// Ví dụ: muốn 200 trả về object có thêm field "status" = false
+        return Ok(new { message = "Yêu cầu hợp lệ.", status = false });</pre>
+              <button type="button" class="copy-btn" data-copy="genCustomGuide">Sao chép</button>
+            </div>
+            <ul class="bullets">
+              <li>Chọn endpoint (List / Detail / Create / Update / Delete / Auth) + status + message ở panel “Message trả về”, rồi bấm <b>“Sinh code”</b>.</li>
+              <li>Thêm field / đổi tên field / đổi giá trị: sửa trực tiếp code sinh ra thành object C# có field mong muốn, ví dụ <code>return Ok(new { message = "...", status = false });</code>.</li>
+              <li>Đổi mã HTTP: chọn status tương ứng trong custom (200 / 201 / 204 / 400 / 401 / 403 / 404) hoặc sửa mã status trong code sinh ra.</li>
+              <li>Custom message chỉ thay message; field và tên field do người viết code trực tiếp.</li>
             </ul>
           </section>
 
@@ -721,6 +990,215 @@
             </ul>
           </section>
 
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SINH LOGIN ============ -->
+    <div class="view" id="view-login" hidden>
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Code generator</span>
+              <h1>Sinh Login</h1>
+              <p>
+                Sinh trang Razor <code>Login</code>: backend PageModel <code>OnPostAsync</code> gọi
+                <code>ApiClient.LoginAsync</code> → lưu token vào Session → redirect về <code>/Products/Index</code>.
+                Giao diện phía trên: form username/password + alert lỗi.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Backend</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Frontend</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Copy / tải .cs</span>
+            </div>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">1</span>
+              <h2>Code Login</h2>
+              <div class="head-actions">
+                <span class="muted" id="loginMeta">Sinh code Login</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadLogin">Tải .cshtml</button>
+                <button type="button" class="btn ghost sm" id="btnDownloadLoginCs">Tải .cs</button>
+                <button type="button" class="btn ghost sm" id="btnDownloadLoginApi">Tải AuthController.cs</button>
+              </div>
+            </div>
+
+            <div class="code-box big">
+              <pre id="loginCode">// Code Login (frontend)</pre>
+              <button type="button" class="copy-btn" data-copy="loginCode">Sao chép</button>
+            </div>
+
+            <div class="code-box">
+              <pre id="loginCs"></pre>
+              <button type="button" class="copy-btn" data-copy="loginCs">Sao chép</button>
+            </div>
+
+            <div class="code-box">
+              <pre id="loginApiCode">// Code BE Login (AuthApi)</pre>
+              <button type="button" class="copy-btn" data-copy="loginApiCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Backend: POST <code>/api/auth/login</code> qua <code>ApiClient.LoginAsync</code> → lỗi thì <code>ErrorMessage</code>, thành thì lưu token vào Session.</li>
+              <li>Giao diện: form POST + <code>asp-for="Input.Username/Password"</code> + validation + alert.</li>
+              <li>Redirect sau login: <code>RedirectToPage("/Products/Index")</code>.</li>
+              <li>BE login (<code>AuthController</code> trong <code>Prn232.AuthApi</code>): generator tool này sinh phần FE; backend đã có sẵn — tool hiện sinh cả 2 phía.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CÁCH DÙNG LINQ ============ -->
+    <div class="view" id="view-linq" hidden>
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Code generator</span>
+              <h1>Cách dùng LINQ</h1>
+              <p>
+                Dùng <code>Where</code> (lọc / tìm kiếm), <code>OrderBy / ThenBy</code> (sắp xếp) và
+                <code>Include</code> (nối khóa ngoại) để viết query list trong controller CRUD.
+                Tool chỉ đưa ra snippet <b>tham khảo</b> — bạn tự đọc, tự viết và tự chỉnh controller.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Query</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Where / OrderBy / Include</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Chỉnh tay</span>
+            </div>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">1</span>
+              <h2>Snippet LINQ (tham khảo)</h2>
+              <div class="head-actions">
+                <span class="muted" id="linqMeta">Cách dùng LINQ · tham khảo</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadLinq">Tải .cs</button>
+              </div>
+            </div>
+
+            <div class="code-box big">
+              <pre id="linqCode">// GET: api/Products
+var query = _context.Set&lt;Product&gt;().AsNoTracking();
+
+// [SỬA KHI ĐỔI ĐỔI] Thêm filter / search / sort theo ý cần:
+// query = query.Where(e => e.Price &gt; 100);
+// query = query.Where(e => e.Name.Contains(keyword));
+query = query.OrderBy(e =&gt; e.Name).ThenBy(e =&gt; e.Price);
+
+var items = await query.ToListAsync();
+
+// Nối bảng theo khóa ngoại (Include) — ví dụ: Product -&gt; Category:
+var itemsWithFk = await _context.Set&lt;Product&gt;()
+    .Include(e =&gt; e.Category)
+    .ToListAsync();
+
+return Ok(items);</pre>
+              <button type="button" class="copy-btn" data-copy="linqCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Snippet tham khảo cho query list: Where (lọc / tìm kiếm), OrderBy / ThenBy (sắp xếp) + Include (nối khóa ngoại).</li>
+              <li>Khi viết tay cho controller: thêm Where cho lọc, OrderBy cho sắp xếp, Include cho nối bảng FK.</li>
+              <li>Query CRUD controller đang dùng: <code>_context.Set&lt;Product&gt;().AsNoTracking()</code>.</li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SINH CONTROLLER ODATA CRUD ============ -->
+    <div class="view" id="view-odata" hidden>
+      <div class="guide-scroll">
+        <div class="guide">
+
+          <section class="guide-hero">
+            <div class="hero-text">
+              <span class="eyebrow">Code generator</span>
+              <h1>Sinh Controller OData CRUD</h1>
+              <p>
+                Sinh controller CRUD cho API <b>OData</b> bằng <code>[EnableQuery]</code>: list trả thẳng
+                <code>IQueryable</code> → OData tự xử <code>$filter</code> / <code>$orderby</code> / <code>$top</code> / <code>$skip</code> / <code>$count</code>.
+                Create / Update / Delete dùng EF Core thông thường.
+              </p>
+            </div>
+            <div class="hero-flow">
+              <span class="flow-step"><b>1</b> Chọn bảng</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>2</b> Sinh controller</span>
+              <span class="flow-arrow">→</span>
+              <span class="flow-step"><b>3</b> Copy / tải .cs</span>
+            </div>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">1</span>
+              <h2>Controller OData CRUD</h2>
+              <div class="head-actions">
+                <span class="muted" id="odataMeta">Sinh controller OData CRUD</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadOdata">Tải .cs</button>
+              </div>
+            </div>
+
+            <label class="field">
+              <span>Bảng đã phân tích</span>
+              <select class="input" id="odataTable"></select>
+              <small>Import file SQL ở mục “Cấu trúc bảng” để có danh sách.</small>
+            </label>
+
+            <div class="code-box big">
+              <pre id="odataCode">// Chọn bảng để sinh controller OData CRUD.</pre>
+              <button type="button" class="copy-btn" data-copy="odataCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>List: <code>[HttpGet]</code> + <code>[EnableQuery]</code> trả <code>IQueryable</code> → OData tự xử <code>$filter</code> / <code>$orderby</code> / <code>$top</code> / <code>$skip</code> / <code>$count</code>.</li>
+              <li>Chi tiết / tạo / sửa / xoá: hành vi EF Core thông thường (Create → <code>Created</code>, Update/Delete → <code>NoContent</code> / <code>NotFound</code>).</li>
+              <li>Cần thêm package <code>Microsoft.AspNetCore.OData</code> trong project API.</li>
+            </ul>
+          </section>
+
+          <section class="card step">
+            <div class="step-head">
+              <span class="step-no">2</span>
+              <h2>Chèn vào <code>Program.cs</code> (của API)</h2>
+              <div class="head-actions">
+                <span class="muted">OData · đăng ký service</span>
+                <button type="button" class="btn ghost sm" id="btnDownloadOdataProgram">Tải .cs</button>
+              </div>
+            </div>
+            <p class="step-desc">
+              Thêm đoạn dưới vào <code>Program.cs</code> của project API (sau dòng <code>builder.Services.AddControllers()</code>).
+            </p>
+
+            <div class="code-box">
+              <pre id="odataProgramCode">using Microsoft.AspNetCore.OData;
+
+// [SỬA KHI ĐỔI ĐỔI] OData: cho phép query $filter / $orderby / $top / $skip / $count / $select / $expand
+builder.Services.AddControllers().AddOData(options => options.Select().Filter().OrderBy().Count().Expand());</pre>
+              <button type="button" class="copy-btn" data-copy="odataProgramCode">Sao chép</button>
+            </div>
+
+            <ul class="bullets">
+              <li>Thêm <code>using Microsoft.AspNetCore.OData;</code> ở đầu file <code>Program.cs</code>.</li>
+              <li>Đổi <code>AddControllers()</code> → <code>AddControllers().AddOData(...)</code>.</li>
+              <li>Cần package <code>Microsoft.AspNetCore.OData</code> trong project API.</li>
+            </ul>
+          </section>
         </div>
       </div>
     </div>

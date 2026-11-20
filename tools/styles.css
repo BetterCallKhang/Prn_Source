@@ -682,6 +682,8 @@ select.input {
 .page-size .input.mini { width: 64px; }
 .msg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .msg-grid .field > span { text-transform: none; letter-spacing: 0; font-size: 11px; color: #64748b; }
+.msg-custom { display: grid; grid-template-columns: 100px 90px 1fr auto; gap: 8px; align-items: center; margin: 8px 0; }
+.msg-custom-head { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 
 /* ---------- Kết quả mẫu endpoint ---------- */
 .sample-bar { display: flex; gap: 8px; align-items: center; margin-top: 12px; flex-wrap: wrap; }
